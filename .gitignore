@@ -1,0 +1,112 @@
+# ---------------------------------------------------------------
+# Secrets: never commit these
+# ---------------------------------------------------------------
+secrets/
+**/secrets/
+.env
+.env.*
+!.env.example
+**/.dev.vars
+**/.dev.vars.*
+vapid*.json
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+**/android/key.properties
+**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+**/macos/Runner/GoogleService-Info.plist
+*.mobileprovision
+*.cer
+
+# ---------------------------------------------------------------
+# Cloudflare Worker / Node (push-server/)
+# ---------------------------------------------------------------
+node_modules/
+.wrangler/
+.mf/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+*.tsbuildinfo
+wrangler.toml.bak
+
+# ---------------------------------------------------------------
+# Flutter / Dart
+# ---------------------------------------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+/coverage/
+**/doc/api/
+.widget_preview/
+app.*.symbols
+app.*.map.json
+migrate_working_dir/
+
+# Android
+/android/app/debug
+/android/app/profile
+/android/app/release
+**/android/.gradle/
+**/android/local.properties
+**/android/**/gradle-wrapper.jar
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# iOS / macOS
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+**/ios/Pods/
+**/ios/.symlinks/
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# Linux / Windows
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+
+# ---------------------------------------------------------------
+# Python helpers (tool/, data/_scrape/)
+# ---------------------------------------------------------------
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ---------------------------------------------------------------
+# Editors / OS / misc
+# ---------------------------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.history
+.atom/
+.build/
+.buildlog/
+.svn/
+.swiftpm/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+*.class
+*.log

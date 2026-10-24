@@ -1,0 +1,10 @@
+Fallback fonts for the Flutter web engine, self-hosted so the app makes no
+requests to Google at runtime. Same paths as https://fonts.gstatic.com/s/
+(see web/flutter_bootstrap.js fontFallbackBaseUrl and
+tool/fetch_fallback_fonts.py).
+
+- Noto fonts (Noto Sans *, Noto Color Emoji, Noto Music, ...):
+  SIL Open Font License 1.1, https://openfontlicense.org
+  Source: https://github.com/notofonts
+- Roboto: SIL Open Font License 1.1 (earlier releases Apache License 2.0),
+  https://github.com/googlefonts/roboto-3-classic

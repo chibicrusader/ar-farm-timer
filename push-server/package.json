@@ -1,0 +1,20 @@
+{
+  "name": "archerage-farm-timer-push",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "gen-vapid": "node scripts/gen-vapid.mjs",
+    "db:local": "wrangler d1 execute DB --local --file schema.sql && wrangler d1 migrations apply DB --local",
+    "dev": "wrangler dev --local --test-scheduled --port 8787",
+    "test": "node --test test/webpush.test.mjs test/bulk.test.mjs",
+    "test:e2e": "node test/e2e.mjs",
+    "deploy": "bash scripts/deploy.sh"
+  },
+  "devDependencies": {
+    "http_ece": "1.2.1",
+    "wrangler": "4.151.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

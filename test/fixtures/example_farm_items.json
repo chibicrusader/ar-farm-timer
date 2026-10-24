@@ -1,0 +1,46 @@
+[
+  {
+    "name": "Example Potato",
+    "category": "crops",
+    "growTimeMinutes": 30,
+    "harvestCycles": 1,
+    "witherOrDeathMinutes": 60,
+    "climate": "Temperate",
+    "notes": "EXAMPLE DATA - placeholder only, not real ArcheRage values. Run tool/sync_data.sh to replace.",
+    "source": "placeholder",
+    "archerageConfirmed": false
+  },
+  {
+    "name": "Example Apple Tree",
+    "category": "trees",
+    "growTimeMinutes": 240,
+    "harvestCycles": 3,
+    "witherOrDeathMinutes": null,
+    "climate": "Temperate",
+    "notes": "EXAMPLE DATA - placeholder only, not real ArcheRage values.",
+    "source": "placeholder",
+    "archerageConfirmed": false
+  },
+  {
+    "name": "Example Chick",
+    "category": "livestock",
+    "growTimeMinutes": 90,
+    "harvestCycles": 2,
+    "witherOrDeathMinutes": 120,
+    "climate": null,
+    "notes": "EXAMPLE DATA - placeholder only, not real ArcheRage values.",
+    "source": "placeholder",
+    "archerageConfirmed": false
+  },
+  {
+    "name": "Example Thunderstruck Sapling",
+    "category": "other",
+    "growTimeMinutes": 5,
+    "harvestCycles": 1,
+    "witherOrDeathMinutes": 10,
+    "climate": "Arid",
+    "notes": "EXAMPLE DATA - placeholder only, not real ArcheRage values.",
+    "source": "placeholder",
+    "archerageConfirmed": false
+  }
+]
