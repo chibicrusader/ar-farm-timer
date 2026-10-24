@@ -1,0 +1,503 @@
+{
+ "version": 1,
+ "generated": "2026-10-17",
+ "notes": "Zone climates from ArcheAge sources; see data/RESEARCH.md. The in-game map shows the climate at the bottom right; trust it over this file.",
+ "zones": [
+  {
+   "name": "Solzreed Peninsula",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Gweonid Forest",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Lilyut Hills",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Dewstone Plains",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "White Arden",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Marianople",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Two Crowns",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Cinderstone Moor",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Halcyona",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Ahnimar",
+   "continent": "Nuia",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms"
+   ]
+  },
+  {
+   "name": "Hellswamp",
+   "continent": "Nuia",
+   "climates": [
+    "Tropical"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Sanddeep",
+   "continent": "Nuia",
+   "climates": [
+    "Tropical"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Karkasse Ridgelands",
+   "continent": "Nuia",
+   "climates": [
+    "Subarctic"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Airain Rock",
+   "continent": "Nuia",
+   "climates": [
+    "Subarctic"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms"
+   ]
+  },
+  {
+   "name": "Aubre Cradle",
+   "continent": "Nuia",
+   "climates": [
+    "Subarctic"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms"
+   ]
+  },
+  {
+   "name": "Falcorth Plains",
+   "continent": "Haranya",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Villanelle",
+   "continent": "Haranya",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Silent Forest",
+   "continent": "Haranya",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Ynystere",
+   "continent": "Haranya",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Rookborne Basin",
+   "continent": "Haranya",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Hasla",
+   "continent": "Haranya",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Tigerspine Mountains",
+   "continent": "Haranya",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false,
+   "note": "Listed on the Climate page and the Russian wiki; missing from the Farms table."
+  },
+  {
+   "name": "Rokhala Mountains",
+   "continent": "Haranya",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms"
+   ]
+  },
+  {
+   "name": "Mahadevi",
+   "continent": "Haranya",
+   "climates": [
+    "Tropical"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Perinoor Ruins",
+   "continent": "Haranya",
+   "climates": [
+    "Tropical"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Arcum Iris",
+   "continent": "Haranya",
+   "climates": [
+    "Arid"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Solis Headlands",
+   "continent": "Haranya",
+   "climates": [
+    "Arid"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": false
+  },
+  {
+   "name": "Windscour Savannah",
+   "continent": "Haranya",
+   "climates": [
+    "Arid"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms",
+    "https://archeage.fandom.com/wiki/Climate",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "pvp": true
+  },
+  {
+   "name": "Sunbite Wilds",
+   "continent": "Haranya",
+   "climates": [
+    "Arid"
+   ],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Farms"
+   ]
+  },
+  {
+   "name": "Calmlands",
+   "continent": "Auroria",
+   "climates": [
+    "Temperate",
+    "Arid"
+   ],
+   "sources": [
+    "https://www.reddit.com/r/archeage/comments/2hydd2/auroria_the_promised_land/",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "note": "Dual climate: the whole zone counts as both."
+  },
+  {
+   "name": "Marcala",
+   "continent": "Auroria",
+   "climates": [
+    "Temperate",
+    "Arid"
+   ],
+   "sources": [
+    "https://www.reddit.com/r/archeage/comments/2hydd2/auroria_the_promised_land/",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "note": "Dual climate: the whole zone counts as both."
+  },
+  {
+   "name": "Heedmar",
+   "continent": "Auroria",
+   "climates": [
+    "Temperate",
+    "Subarctic"
+   ],
+   "sources": [
+    "https://www.reddit.com/r/archeage/comments/2hydd2/auroria_the_promised_land/",
+    "http://totalarcheage.blogspot.com/2014/11/auroria-details-four-new-zones-castles.html",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "note": "Dual climate: the whole zone counts as both."
+  },
+  {
+   "name": "Nuimari",
+   "continent": "Auroria",
+   "climates": [
+    "Temperate",
+    "Subarctic"
+   ],
+   "sources": [
+    "https://www.reddit.com/r/archeage/comments/2hydd2/auroria_the_promised_land/",
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "note": "Dual climate: the whole zone counts as both."
+  },
+  {
+   "name": "Sungold Fields",
+   "continent": "Auroria",
+   "climates": [
+    "Temperate",
+    "Tropical"
+   ],
+   "sources": [
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "note": "Only the Russian wiki gives this (Солнечные поля). Unverified."
+  },
+  {
+   "name": "Western Hiram Mountains",
+   "continent": "Auroria",
+   "climates": [
+    "Tropical",
+    "Subarctic",
+    "Arid"
+   ],
+   "sources": [
+    "https://na.archerage.to/forums/threads/archerage-5-0-global-update-custom-version-patch-notes.9910/"
+   ],
+   "note": "ArcheRage-specific: added in the ArcheRage 5.0 custom update. The patch notes list Tropical, Subarctic and Arid (no Temperate)."
+  },
+  {
+   "name": "Exeloch",
+   "continent": "Auroria",
+   "climates": [],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Auroria"
+   ],
+   "note": "Climate unknown (no reliable source). Check the climate at the bottom right of the in-game map."
+  },
+  {
+   "name": "Diamond Shores",
+   "continent": "Auroria",
+   "climates": [],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Auroria"
+   ],
+   "note": "Climate unknown (no reliable source). Check the climate at the bottom right of the in-game map."
+  },
+  {
+   "name": "Mistmerrow",
+   "continent": "Auroria",
+   "climates": [],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Auroria"
+   ],
+   "note": "Climate unknown (no reliable source). Check the climate at the bottom right of the in-game map."
+  },
+  {
+   "name": "Eastern Hiram Mountains",
+   "continent": "Auroria",
+   "climates": [],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Auroria"
+   ],
+   "note": "Climate unknown (no reliable source). Check the climate at the bottom right of the in-game map."
+  },
+  {
+   "name": "Golden Ruins",
+   "continent": "Auroria",
+   "climates": [],
+   "sources": [
+    "https://archeage.fandom.com/wiki/Auroria"
+   ],
+   "note": "Climate unknown (no reliable source). Check the climate at the bottom right of the in-game map."
+  },
+  {
+   "name": "Freedich Island",
+   "continent": "Sea",
+   "climates": [
+    "Temperate"
+   ],
+   "sources": [
+    "https://archeage-wiki.ru/category/ferma/klimaticheskie-zony-1580823227/"
+   ],
+   "note": "Only the Russian wiki gives this (Остров свободы). Unverified."
+  }
+ ]
+}

@@ -1,0 +1,3 @@
+# Cloudflare Pages (ignored by other hosts).
+# Serve the privacy page at its .html URL with a 200 instead of Pages' 308 to /privacy.
+/privacy.html /privacy 200

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12161C">
+  <meta name="color-scheme" content="dark">
+  <title>Privacy Notice · AR Farm Timer</title>
+  <meta name="description" content="What data AR Farm Timer handles and why.">
+  <link rel="canonical" href="https://artimer.win/privacy.html">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <style>
+    :root { --bg: #12161C; --surface: #1B2129; --line: #242C36; --gold: #C9A45C; --text: #E8DCC2; --muted: #B5AA93; }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    header { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); }
+    header .bar { max-width: 720px; margin: 0 auto; padding: 12px 20px; }
+    .back { color: var(--gold); text-decoration: none; font-weight: 600; letter-spacing: .03em; }
+    .back:hover, .back:focus { text-decoration: underline; }
+    main { max-width: 720px; margin: 0 auto; padding: 20px 20px 48px; }
+    article { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px 26px; }
+    h1 { color: var(--gold); font-size: 1.55rem; line-height: 1.25; margin: 0 0 6px; }
+    .updated { color: var(--muted); font-size: .88rem; margin: 0 0 18px; }
+    h2 { color: var(--gold); font-size: 1.12rem; margin: 26px 0 8px; }
+    p { margin: 0 0 10px; }
+    ul { margin: 0 0 10px; padding-left: 1.3em; }
+    li { margin: 0 0 6px; }
+    li::marker { color: var(--gold); }
+    a { color: var(--gold); }
+    footer { text-align: center; margin-top: 22px; }
+  </style>
+</head>
+<body>
+  <header><div class="bar"><a class="back" href="/">← Back to AR Farm Timer</a></div></header>
+  <main>
+    <article>
+      <h1>Privacy Notice: AR Farm Timer</h1>
+      <p class="updated">Last updated: October 20, 2026</p>
+
+      <p>AR Farm Timer (<a href="https://artimer.win">https://artimer.win</a>) is a free, fan-made timer app for farming on ArcheRage. This notice explains what data the app handles and why.</p>
+
+      <h2>What we don't collect</h2>
+      <ul>
+        <li>No accounts. We never ask for your name, email, or any login.</li>
+        <li>No analytics or tracking scripts.</li>
+        <li>No ads.</li>
+        <li>The app doesn't set cookies.</li>
+      </ul>
+
+      <h2>Data stored on your device</h2>
+      <p>Your timers, farms, and settings are saved only in your browser's local storage (or the app's storage) on your device. We don't receive this data. Backups are files you export and keep yourself. Clearing your browser or app data deletes this information from your device.</p>
+
+      <h2>Optional push alerts</h2>
+      <p>Push alerts are off by default. Nothing on this list is sent to our server unless you tap "Enable alerts." Once you turn them on, our push server (push.artimer.win, hosted on Cloudflare Workers with a Cloudflare D1 database) stores:</p>
+      <ul>
+        <li>Your browser's push subscription. This is an endpoint URL issued by your browser's push service (Apple, Google, or Mozilla), plus the encryption keys needed to send you notifications.</li>
+        <li>A random subscription ID and the time the subscription was created.</li>
+        <li>The time your subscription was last active, so unused subscriptions can be deleted automatically (see below).</li>
+        <li>For each alert you schedule, its fire time, title, short body text, and the link to open. The text usually names the item and says it's ready or about to wither, and it can include a farm name you chose.</li>
+      </ul>
+
+      <h2>How long we keep it</h2>
+      <ul>
+        <li>Each scheduled alert is deleted after it's sent. If an alert keeps failing to deliver, it's deleted after 5 attempts or 6 hours, whichever comes first.</li>
+        <li>We keep a delivery log for 7 days for troubleshooting, then delete it. The log holds the subscription ID, alert ID, scheduled and sent times, push status, delivery latency, and whether the send was started by the regular scheduler or a backup scheduled job. It doesn't contain any alert text.</li>
+        <li>Your push subscription stays until you turn alerts off, stops working, or goes unused. Turning alerts off deletes the subscription and every alert linked to it. Subscriptions that stop working, for example after you revoke notification permission or uninstall, are removed automatically. Unused subscriptions are also deleted automatically:
+          <ul>
+            <li>if it never scheduled an alert, after 24 hours</li>
+            <li>if it has no pending alerts, after 3 days without activity</li>
+            <li>in every case, after 40 days without activity</li>
+          </ul>
+          If your subscription is deleted this way, the app quietly sets it up again the next time you set a timer, so you don't need to do anything.</li>
+      </ul>
+
+      <h2>Third parties</h2>
+      <ul>
+        <li>Push delivery: notifications are delivered through your browser vendor's push service (Apple, Google, or Mozilla), which handles them under its own privacy policy.</li>
+        <li>Hosting: the app runs on Cloudflare (Pages and Workers). Like any web host, Cloudflare processes connection data such as IP addresses in order to serve requests. Our push server is at push.artimer.win, behind Cloudflare's firewall, which counts requests from each IP address over a short time window to block floods of traffic. The push server also uses Cloudflare's rate limiting to cap how often each IP address (or, for IPv6, its network prefix) and each alert subscription can save, sync, or cancel timers, turn alerts off, or send a test alert. These counters are held by Cloudflare, last only about a minute, and aren't stored in our database. The app itself doesn't store IP addresses.</li>
+        <li>No other sites: fonts and all other app files are served from this site. The app doesn't load anything from other websites.</li>
+        <li>Server logs: Cloudflare keeps temporary runtime logs for our push server, kept according to Cloudflare's standard retention. These logs can record the hostname of the push service used (for example Apple, Google, or Mozilla) and the first 8 characters of your subscription ID. We haven't set up long-term storage or export of these logs.</li>
+      </ul>
+      <p>We don't sell or share your data with anyone else.</p>
+
+      <h2>Your choices</h2>
+      <ul>
+        <li>You can use the app fully without push alerts, and then nothing about you is stored on our server.</li>
+        <li>You can turn alerts off at any time in the app to delete your subscription and pending alerts.</li>
+        <li>You can also revoke notification permission in your browser or device settings.</li>
+      </ul>
+
+      <h2>Contact</h2>
+      <p>Questions or requests about your data, or about this app: <!--email_off--><a href="mailto:chibicrusader.business@gmail.com">chibicrusader.business@gmail.com</a><!--/email_off--></p>
+
+      <h2>Not affiliated</h2>
+      <p>AR Farm Timer is an unofficial fan project. It is not made, endorsed, or affiliated with XLGAMES, Kakao Games, or ArcheRage. ArcheAge and related names belong to their respective owners.</p>
+
+      <h2>Changes</h2>
+      <p>If the way the app handles data changes, we'll update this page.</p>
+    </article>
+    <footer><a class="back" href="/">← Back to the app</a></footer>
+  </main>
+</body>
+</html>
