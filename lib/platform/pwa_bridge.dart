@@ -83,6 +83,10 @@ abstract class PwaBridge {
 
   /// Opens [url] (installed app: in the browser; tab: navigates there).
   void openUrl(String url);
+
+  /// Shows the "Before you use" notice again (web/consent.js). Records no
+  /// new consent; the first-launch notice is handled before the app starts.
+  void showConsentNotice();
 }
 
 /// Non-web: no PWA features.
@@ -118,4 +122,6 @@ class NoPwaBridge implements PwaBridge {
   void dismissMoved() {}
   @override
   void openUrl(String url) {}
+  @override
+  void showConsentNotice() {}
 }

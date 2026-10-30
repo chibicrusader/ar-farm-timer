@@ -104,7 +104,7 @@ Unidentified Sapling (2h vs 2d20h35m) and Unidentified Seed Bundle (1h30 vs 5h43
 | r/ArcheRage | Searched, but found no farming-timer threads with data. |
 
 ## Reproducing
-Scripts are in `_scrape/` (they ran from /workspace with raw HTML in /workspace/raw). In order: `parse_items.py` → `extract.py` → `parse_dd.py` → `build.py` → `final.py`.
+Scripts are in `_scrape/` (they ran from a scratch folder, with the raw HTML in a `raw/` folder next to it). In order: `parse_items.py` → `extract.py` → `parse_dd.py` → `build.py` → `final.py`.
 
 ## Zone → climate map (added 2026-10-17, used by the app's zone picker)
 Stored in `app/assets/zones.json` (41 zones; fields `name`, `continent`, `climates[]`, `sources[]`, optional `pvp`, `note`).

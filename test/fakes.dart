@@ -70,6 +70,9 @@ class FakeBridge implements PwaBridge {
 
   @override
   void openUrl(String url) => calls.add('openUrl:$url');
+
+  @override
+  void showConsentNotice() => calls.add('showConsentNotice');
 }
 
 class RecordingService implements NotificationService {

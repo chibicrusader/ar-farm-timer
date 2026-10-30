@@ -6,6 +6,14 @@ import 'pwa_bridge.dart';
 @JS('arPwa')
 external ArPwaJs? get _arPwa;
 
+@JS('arConsent')
+external ArConsentJs? get _arConsent;
+
+/// window.arConsent from web/consent.js.
+extension type ArConsentJs._(JSObject _) implements JSObject {
+  external void show();
+}
+
 extension type ArPwaJs._(JSObject _) implements JSObject {
   external JSString info();
   external JSPromise<JSString> persisted();
@@ -116,6 +124,9 @@ class WebPwaBridge implements PwaBridge {
 
   @override
   void openUrl(String url) => _js.openUrl(url.toJS);
+
+  @override
+  void showConsentNotice() => _arConsent?.show();
 }
 
 /// Web build served without web/pwa.js (e.g. `flutter run -d chrome`).

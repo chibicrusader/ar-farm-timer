@@ -680,6 +680,7 @@ export class AlertScheduler {
 
   async fetch(request) {
     const path = new URL(request.url).pathname;
+    if (isPaused(this.env)) { await this.state.storage.deleteAlarm(); return Response.json({ paused: true }); }
     if (path === '/rearm') {
       const hint = Number(new URL(request.url).searchParams.get('earliest'));
       await (Number.isFinite(hint) && hint > 0 ? this.armEarlier(hint) : this.arm());
@@ -693,6 +694,7 @@ export class AlertScheduler {
   }
 
   async alarm() {
+    if (isPaused(this.env)) { await this.state.storage.deleteAlarm(); return; }
     await this.run('alarm');
   }
 
@@ -752,6 +754,9 @@ export class AlertScheduler {
   }
 }
 
+/** Maintenance switch: set PAUSED = "1" in wrangler.toml [vars] to stop all sending and API calls. */
+function isPaused(env) { return env.PAUSED === '1' || env.PAUSED === 'true'; }
+
 async function pruneLog(env) {
   await env.DB.prepare('DELETE FROM deliveries WHERE sent_at < ?').bind(Date.now() - LOG_RETENTION_MS).run().catch(() => {});
 }
@@ -760,6 +765,7 @@ export default {
   async fetch(request, env, ctx) {
     const cors = corsHeaders(request, env);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    if (isPaused(env)) return json({ error: 'Down for maintenance', paused: true }, 503, cors);
     // CORS only stops browsers from READING responses; refuse other sites'
     // pages outright so visitors' browsers can't be used to call the API.
     if (!originAllowed(request.headers.get('Origin'), env, request.method)) return json({ error: 'origin not allowed' }, 403, cors);
@@ -774,6 +780,7 @@ export default {
   },
 
   async scheduled(controller, env, ctx) {
+    if (isPaused(env)) return;
     // Watchdog: run the send loop inside the scheduler (re-arms its alarm).
     // Without the Durable Object binding, send directly (old behaviour).
     const work = env.SCHEDULER

@@ -14,6 +14,7 @@
   var rest = location.pathname + location.search + location.hash;
 
   if (host === 'www.artimer.win') {
+    window.arRedirecting = true; // consent.js: don't show the notice on the way out
     location.replace(NEW_ORIGIN + rest);
     return;
   }
@@ -47,6 +48,7 @@
   }
   var saved = DATA_KEYS.some(hasData);
   if (!saved) {
+    window.arRedirecting = true;
     location.replace(NEW_ORIGIN + location.pathname + location.search);
     return;
   }

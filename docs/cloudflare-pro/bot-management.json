@@ -1,0 +1,9 @@
+{
+  "_comment": "PUT /zones/<ZONE_ID>/bot_management (Super Bot Fight Mode, 'SBFM Pro Plan' schema). Pro has no 'likely automated' setting (Business+). apply.sh merges these keys into the current config (GET first) so the AI-bot fields stay as they are. Start with managed_challenge; switch sbfm_definitely_automated to block after a few clean days (set SBFM_ACTION=block).",
+  "fight_mode": false,
+  "sbfm_definitely_automated": "managed_challenge",
+  "sbfm_verified_bots": "allow",
+  "sbfm_static_resource_protection": false,
+  "enable_js": false,
+  "optimize_wordpress": false
+}

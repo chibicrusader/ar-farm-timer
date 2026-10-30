@@ -59,7 +59,7 @@ execSync('npx --no-install wrangler d1 execute DB --local --file schema.sql', { 
 execSync('npx --no-install wrangler d1 migrations apply DB --local', { stdio: 'ignore', env: { ...process.env, WRANGLER_SEND_METRICS: 'false', CI: 'true' } });
 const dev = spawn('npx', ['--no-install', 'wrangler', 'dev', '--local', '--test-scheduled', '--port', String(PORT), '--ip', '127.0.0.1',
   '--var', `EXTRA_PUSH_HOSTS:127.0.0.1:${MOCK}`, '--var', 'APP_URL:https://example.test/app/',
-  '--var', 'ALLOWED_ORIGINS:https://example.test'],
+  '--var', 'ALLOWED_ORIGINS:https://example.test', '--var', 'PAUSED:0'],
 { env: { ...process.env, WRANGLER_SEND_METRICS: 'false' }, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
 let log = '';
 dev.stdout.on('data', (d) => { log += d; });

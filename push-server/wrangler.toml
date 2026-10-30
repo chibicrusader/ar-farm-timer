@@ -9,11 +9,10 @@ compatibility_date = "2025-09-01"
 # transition so installs still running an older build keep working. See
 # README.md "Custom domain" before changing these.
 workers_dev = true
-# Not attached yet. To attach the custom domain on the next deploy, uncomment
-# (or attach it in the dashboard: Workers > this Worker > Settings > Domains).
-# routes = [
-#   { pattern = "push.artimer.win", custom_domain = true },
-# ]
+# Custom domain push.artimer.win (attached on deploy).
+routes = [
+  { pattern = "push.artimer.win", custom_domain = true },
+]
 
 [triggers]
 crons = ["* * * * *"]   # every minute: watchdog (re-arms the scheduler alarm, sends anything missed)
@@ -62,6 +61,8 @@ migrations_dir = "migrations"
 database_id = "00000000-0000-0000-0000-000000000000"   # placeholder; scripts/deploy.sh creates the D1 database and fills this in
 
 [vars]
+# Maintenance switch: "1" stops all sending and API calls (set back to "0" to resume).
+PAUSED = "0"
 # Public half of the VAPID key pair (safe to commit; set by scripts/deploy.sh).
 VAPID_PUBLIC_KEY = ""
 # Contact for push services (Apple requires a mailto: or https: URL).
