@@ -1,0 +1,28 @@
+{
+  "_comment": "Phase http_request_firewall_managed. Stage 1 (first 3-7 days): Cloudflare Managed Ruleset with every rule set to Log; OWASP PL1, threshold 60, action Log. Ruleset IDs are Cloudflare's public managed-ruleset IDs (same for every zone), not account data.",
+  "rules": [
+    {
+      "description": "[pro] Cloudflare Managed Ruleset",
+      "expression": "true",
+      "action": "execute",
+      "action_parameters": {
+        "id": "efb7b8c949ac4650a09736fc376e9aee",
+        "overrides": { "action": "log" }
+      },
+      "enabled": true
+    },
+    {
+      "description": "[pro] Cloudflare OWASP Core Ruleset (PL1, threshold 60, log)",
+      "expression": "true",
+      "action": "execute",
+      "action_parameters": {
+        "id": "4814384a9e5d4991b9815dcfc25d2f1f",
+        "overrides": {
+          "categories": [ { "category": "paranoia-level-2", "enabled": false }, { "category": "paranoia-level-3", "enabled": false }, { "category": "paranoia-level-4", "enabled": false } ],
+          "rules": [ { "id": "6179ae15870a4bb7b2d480d4843b323c", "action": "log", "score_threshold": 60, "enabled": true } ]
+        }
+      },
+      "enabled": true
+    }
+  ]
+}

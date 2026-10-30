@@ -1,0 +1,30 @@
+{
+  "_comment": "Phase http_request_cache_settings (Cache Rules). Pro limit: 25 rules. The Flutter build has NO content-hashed file names, so only the versioned /fonts/fallback/vNN/ paths get a long TTL. Pages already caches its own assets and purges them on deploy; zone-level edge TTLs on unversioned files would serve stale files after a deploy.",
+  "rules": [
+    {
+      "description": "[pro] push API: never cache",
+      "expression": "(http.host eq \"push.artimer.win\")",
+      "action": "set_cache_settings",
+      "action_parameters": { "cache": false },
+      "enabled": true
+    },
+    {
+      "description": "[pro] site: bypass zone cache for unversioned app files (shell, SW, bootstrap, consent, manifest, privacy, main.dart.js, assets)",
+      "expression": "(http.host in {\"artimer.win\" \"www.artimer.win\"} and not starts_with(http.request.uri.path, \"/fonts/fallback/\") and not http.request.uri.path.extension in {\"png\" \"jpg\" \"jpeg\" \"gif\" \"webp\" \"ico\"})",
+      "action": "set_cache_settings",
+      "action_parameters": { "cache": false },
+      "enabled": true
+    },
+    {
+      "description": "[pro] site: versioned fallback fonts, 1 year at the edge",
+      "expression": "(http.host in {\"artimer.win\" \"www.artimer.win\"} and starts_with(http.request.uri.path, \"/fonts/fallback/\"))",
+      "action": "set_cache_settings",
+      "action_parameters": {
+        "cache": true,
+        "edge_ttl": { "mode": "override_origin", "default": 31536000 },
+        "browser_ttl": { "mode": "respect_origin" }
+      },
+      "enabled": true
+    }
+  ]
+}

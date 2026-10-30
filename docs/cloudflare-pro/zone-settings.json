@@ -1,0 +1,8 @@
+{
+  "_comment": "PATCH /zones/<ZONE_ID>/settings/<id> one by one. polish/webp need Pro. browser_cache_ttl 0 = 'Respect Existing Headers' (today it is 14400, which can override our short Cache-Control values).",
+  "settings": [
+    { "id": "polish", "value": "lossless" },
+    { "id": "webp", "value": "on" },
+    { "id": "browser_cache_ttl", "value": 0 }
+  ]
+}

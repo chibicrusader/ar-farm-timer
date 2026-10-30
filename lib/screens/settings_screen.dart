@@ -45,6 +45,16 @@ class SettingsScreen extends StatelessWidget {
                   icon: const Icon(Icons.privacy_tip_outlined),
                   label: const Text('Read the full Privacy page'),
                 ),
+                if (info.isWeb)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const Key('consentNoticeOpen'),
+                      onPressed: bridge.showConsentNotice,
+                      icon: const Icon(Icons.info_outline),
+                      label: const Text('View the "Before you use" notice'),
+                    ),
+                  ),
               ],
             ),
             SettingsSection(

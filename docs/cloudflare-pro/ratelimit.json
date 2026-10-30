@@ -1,0 +1,29 @@
+{
+  "_comment": "Phase http_ratelimit. Pro: 2 rules; expression fields Host/URI/Path/Full URI/Query/Verified Bot only (no method); characteristics IP only (+ cf.colo.id, required); period up to 60 s; mitigation timeout up to 1 h. This REPLACES the Free-plan 'push API flood' rule - the first rule below is its successor.",
+  "rules": [
+    {
+      "description": "[pro] push API flood (write paths)",
+      "expression": "(http.host eq \"push.artimer.win\" and http.request.uri.path in {\"/subscribe\" \"/schedule\" \"/cancel\" \"/sync\" \"/test\" \"/unsubscribe\"})",
+      "action": "block",
+      "ratelimit": {
+        "characteristics": ["cf.colo.id", "ip.src"],
+        "period": 60,
+        "requests_per_period": 150,
+        "mitigation_timeout": 600
+      },
+      "enabled": true
+    },
+    {
+      "description": "[pro] site-wide flood (static site)",
+      "expression": "(http.host in {\"artimer.win\" \"www.artimer.win\"} and not starts_with(http.request.uri.path, \"/cdn-cgi/\") and not cf.bot_management.verified_bot)",
+      "action": "block",
+      "ratelimit": {
+        "characteristics": ["cf.colo.id", "ip.src"],
+        "period": 60,
+        "requests_per_period": 600,
+        "mitigation_timeout": 300
+      },
+      "enabled": true
+    }
+  ]
+}

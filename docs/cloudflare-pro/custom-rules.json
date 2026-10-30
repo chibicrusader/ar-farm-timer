@@ -1,0 +1,31 @@
+{
+  "_comment": "Phase http_request_firewall_custom (WAF custom rules). Pro limit: 20 rules in this phase, no regex. apply.sh PUTs these rules FIRST and appends every existing rule whose description does not start with '[pro]' (e.g. 'Block secret-file scans'), so nothing already live is lost. Keys starting with '_' are stripped before sending.",
+  "rules": [
+    {
+      "description": "[pro] push API: known routes skip Super Bot Fight Mode",
+      "expression": "(http.host eq \"push.artimer.win\" and ((http.request.method eq \"OPTIONS\") or (http.request.method eq \"GET\" and http.request.uri.path in {\"/\" \"/health\" \"/vapid-public-key\"}) or (http.request.method eq \"POST\" and http.request.uri.path in {\"/subscribe\" \"/schedule\" \"/cancel\" \"/sync\" \"/test\" \"/unsubscribe\"})))",
+      "action": "skip",
+      "action_parameters": { "phases": ["http_request_sbfm"] },
+      "logging": { "enabled": true },
+      "enabled": true
+    },
+    {
+      "description": "[pro] push API: block unknown methods/paths",
+      "expression": "(http.host eq \"push.artimer.win\" and not ((http.request.method eq \"OPTIONS\") or (http.request.method eq \"GET\" and http.request.uri.path in {\"/\" \"/health\" \"/vapid-public-key\"}) or (http.request.method eq \"POST\" and http.request.uri.path in {\"/subscribe\" \"/schedule\" \"/cancel\" \"/sync\" \"/test\" \"/unsubscribe\"})))",
+      "action": "block",
+      "enabled": true
+    },
+    {
+      "description": "[pro] static site: only GET/HEAD",
+      "expression": "(http.host in {\"artimer.win\" \"www.artimer.win\"} and not http.request.method in {\"GET\" \"HEAD\"} and not starts_with(http.request.uri.path, \"/cdn-cgi/\"))",
+      "action": "block",
+      "enabled": true
+    },
+    {
+      "description": "[pro] block exploit probe paths",
+      "expression": "((starts_with(http.request.uri.path, \"/.\") and not starts_with(http.request.uri.path, \"/.well-known/\")) or lower(http.request.uri.path) contains \"wp-\" or lower(http.request.uri.path) contains \"/wordpress\" or lower(http.request.uri.path) contains \"xmlrpc\" or lower(http.request.uri.path) contains \"phpmyadmin\" or lower(http.request.uri.path) contains \"/cgi-bin\" or lower(http.request.uri.path) contains \"/vendor/\" or lower(http.request.uri.path) contains \"/actuator\" or lower(http.request.uri.path) contains \"/server-status\" or lower(http.request.uri.path) contains \"/boaform\" or lower(http.request.uri.path) contains \"/hnap1\" or http.request.uri.path.extension in {\"php\" \"php5\" \"php7\" \"phtml\" \"asp\" \"aspx\" \"jsp\" \"cgi\" \"pl\" \"env\" \"ini\" \"sql\" \"bak\" \"old\" \"swp\" \"yml\" \"yaml\" \"conf\" \"config\" \"log\" \"sh\"})",
+      "action": "block",
+      "enabled": true
+    }
+  ]
+}

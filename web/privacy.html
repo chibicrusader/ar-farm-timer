@@ -38,23 +38,24 @@
   <main>
     <article>
       <h1>Privacy Notice: AR Farm Timer</h1>
-      <p class="updated">Last updated: October 20, 2026</p>
+      <p class="updated">Last updated: October 29, 2026</p>
 
       <p>AR Farm Timer (<a href="https://artimer.win">https://artimer.win</a>) is a free, fan-made timer app for farming on ArcheRage. This notice explains what data the app handles and why.</p>
 
       <h2>What we don't collect</h2>
       <ul>
         <li>No accounts. We never ask for your name, email, or any login.</li>
-        <li>No analytics or tracking scripts.</li>
+        <li>No tracking, and no analytics beyond Cloudflare's privacy-focused page statistics (see &quot;Third parties&quot;).</li>
         <li>No ads.</li>
-        <li>The app doesn't set cookies.</li>
+        <li>The app itself doesn't set cookies. Cloudflare's bot protection sets a short-lived security cookie (see &quot;Cookies&quot;).</li>
       </ul>
 
       <h2>Data stored on your device</h2>
       <p>Your timers, farms, and settings are saved only in your browser's local storage (or the app's storage) on your device. We don't receive this data. Backups are files you export and keep yourself. Clearing your browser or app data deletes this information from your device.</p>
+      <p>When you select Agree on the &quot;Before you use&quot; notice, the app saves a small note in your browser's local storage so it doesn't show the notice again. This note stays on your device and isn't sent to our server. Clearing your browser data will bring the notice back.</p>
 
       <h2>Optional push alerts</h2>
-      <p>Push alerts are off by default. Nothing on this list is sent to our server unless you tap "Enable alerts." Once you turn them on, our push server (push.artimer.win, hosted on Cloudflare Workers with a Cloudflare D1 database) stores:</p>
+      <p>Push alerts are off by default. Nothing on this list is sent to our server unless you tap "Enable alerts." Once you turn them on, our push server (push.artimer.win, hosted on Cloudflare, with its database also kept by Cloudflare) stores:</p>
       <ul>
         <li>Your browser's push subscription. This is an endpoint URL issued by your browser's push service (Apple, Google, or Mozilla), plus the encryption keys needed to send you notifications.</li>
         <li>A random subscription ID and the time the subscription was created.</li>
@@ -78,11 +79,15 @@
       <h2>Third parties</h2>
       <ul>
         <li>Push delivery: notifications are delivered through your browser vendor's push service (Apple, Google, or Mozilla), which handles them under its own privacy policy.</li>
-        <li>Hosting: the app runs on Cloudflare (Pages and Workers). Like any web host, Cloudflare processes connection data such as IP addresses in order to serve requests. Our push server is at push.artimer.win, behind Cloudflare's firewall, which counts requests from each IP address over a short time window to block floods of traffic. The push server also uses Cloudflare's rate limiting to cap how often each IP address (or, for IPv6, its network prefix) and each alert subscription can save, sync, or cancel timers, turn alerts off, or send a test alert. These counters are held by Cloudflare, last only about a minute, and aren't stored in our database. The app itself doesn't store IP addresses.</li>
-        <li>No other sites: fonts and all other app files are served from this site. The app doesn't load anything from other websites.</li>
+        <li>Hosting: the app and its push server run on Cloudflare. Like any web host, Cloudflare processes connection data such as IP addresses in order to serve requests. Our push server is at push.artimer.win, behind Cloudflare's firewall, which counts requests from each IP address over a short time window to block floods of traffic. The push server also uses Cloudflare's rate limiting to cap how often each IP address (or, for IPv6, its network prefix) and each alert subscription can save, sync, or cancel timers, turn alerts off, or send a test alert. These counters are held by Cloudflare, last only about a minute, and aren't stored in our database. The app itself doesn't store IP addresses.</li>
+        <li>Page statistics: we use Cloudflare Web Analytics only to understand how the site is used and to improve it. It adds a small script from Cloudflare (static.cloudflareinsights.com) that reports page views, the page path, the referring page, your country, your browser and device type, and page load performance to Cloudflare. We see this as combined statistics in Cloudflare's dashboard, not as profiles of individual visitors, and we don't collect your name, email, or any account details. According to Cloudflare, it doesn't use cookies or local storage, doesn't fingerprint your device, doesn't track you across sites, and isn't used for advertising. To receive these reports and work out your country, Cloudflare processes your IP address, as any web host does. We never sell any data. If your browser or a content blocker blocks static.cloudflareinsights.com, you simply won't be counted in these statistics, and the app's timers, alerts, and everything else work exactly the same. You don't have to allow analytics to use the app.</li>
+        <li>No other sites: fonts and all other app files are served from this site. Apart from Cloudflare's page statistics script, the app doesn't load anything from other websites.</li>
         <li>Server logs: Cloudflare keeps temporary runtime logs for our push server, kept according to Cloudflare's standard retention. These logs can record the hostname of the push service used (for example Apple, Google, or Mozilla) and the first 8 characters of your subscription ID. We haven't set up long-term storage or export of these logs.</li>
       </ul>
-      <p>We don't sell or share your data with anyone else.</p>
+      <p>We don't sell your data. We share it only with the services that run the app for us, or if the law requires it. Cloudflare hosts the site and push server, handles rate limiting and bot protection, and provides page statistics. If you turn on push alerts, the push service your browser uses (Apple, Google, or Mozilla) delivers them. These services receive only what's described above, and our own code doesn't store IP addresses.</p>
+
+      <h2>Cookies</h2>
+      <p>Our own code doesn't set any cookies, and page statistics don't use cookies. To protect the site from automated traffic, Cloudflare's bot protection sets a short-lived security cookie. According to Cloudflare, it helps tell people apart from bots, expires after 30 minutes of inactivity, isn't linked to any account or ID in the app, and isn't used to track you across sites. Its contents are encrypted so only Cloudflare can read them. If Cloudflare asks your browser to complete a quick security check, it may also set a second security cookie so you aren't asked again. These cookies are only used to keep the site secure, never for advertising. Cloudflare lists the cookies it uses in its documentation: <a href="https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/" rel="noopener noreferrer">https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/</a></p>
 
       <h2>Your choices</h2>
       <ul>

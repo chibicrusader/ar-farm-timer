@@ -46,8 +46,9 @@ flutter build web --release --no-web-resources-cdn --base-href "$BASE_HREF" \
   --dart-define=PUSH_SERVER_FALLBACK_URL="$PUSH_FALLBACK"
 # Flutter's deprecated worker unregisters itself; make sure it is never used.
 rm -f -- build/web/flutter_service_worker.js
-# The CSP may connect to the push server (both addresses) and nothing else off-site (fallback
-# fonts are self-hosted, see web/flutter_bootstrap.js).
+# The CSP may connect to the push server (both addresses) and, for Cloudflare Web Analytics,
+# cloudflareinsights.com; nothing else off-site (fallback fonts are self-hosted, see
+# web/flutter_bootstrap.js).
 python3 - build/web/_headers "$PUSH_ORIGIN" <<'PY'
 import sys
 path, origin = sys.argv[1], sys.argv[2]

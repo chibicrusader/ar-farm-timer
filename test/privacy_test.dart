@@ -161,6 +161,40 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('Settings → Privacy can show the "Before you use" notice again', (tester) async {
+    final bridge = FakeBridge(info: const PwaInfo(isWeb: true, ios: true, standalone: true, pushSupported: true));
+    await pump(tester, bridge);
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    final settingsList = find.descendant(of: find.byType(SettingsScreen), matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.byKey(const Key('consentNoticeOpen')), 200, scrollable: settingsList);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('consentNoticeOpen')));
+    expect(bridge.calls, contains('showConsentNotice'));
+    expect(bridge.calls.where((c) => c.startsWith('enablePush')), isEmpty);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  test('web/consent.js: localStorage only, loaded before the app, not on the privacy page', () {
+    final js = File('web/consent.js').readAsStringSync();
+    expect(js, contains("var STORAGE_KEY = 'privacyConsent';"));
+    // v2: the Cloudflare bot-protection cookie sentence (approved 2026-10-29) asks everyone again.
+    expect(js, contains('var CONSENT_VERSION = 2;'));
+    expect(js, contains('sets a short-lived security cookie to block automated traffic'));
+    expect(js, contains('localStorage.setItem(STORAGE_KEY'));
+    expect(js, contains("'aria-modal': 'true'"));
+    expect(js, contains("role: 'dialog'"));
+    // Never a cookie, never sent anywhere, never touches push.
+    for (final banned in ['document.cookie', 'fetch(', 'XMLHttpRequest', 'sendBeacon', 'arPwa', 'Notification']) {
+      expect(js, isNot(contains(banned)), reason: banned);
+    }
+    final index = File('web/index.html').readAsStringSync();
+    expect(index.indexOf('<script src="consent.js"></script>'), greaterThan(0));
+    expect(index.indexOf('consent.js'), lessThan(index.indexOf('flutter_bootstrap.js')));
+    expect(index, contains('<link rel="stylesheet" href="consent.css">'));
+    expect(File('web/flutter_bootstrap.js').readAsStringSync(), contains('await window.arConsent.ready'));
+  });
+
   test('web/privacy.html carries the same notice as the in-app page', () {
     final html = File('web/privacy.html').readAsStringSync();
     final body = html.substring(html.indexOf('<article>'), html.indexOf('</article>'));

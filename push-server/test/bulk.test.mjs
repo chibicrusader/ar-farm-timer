@@ -772,7 +772,7 @@ test('wrangler.toml declares the three rate-limit bindings with distinct namespa
   for (const b of blocks) assert.ok(b.period === 10 || b.period === 60, b.name);
   const write = blocks.find((b) => b.name === 'RL_WRITE');
   assert.ok(write.limit >= 20 && write.limit <= 30);
-  // The custom domain is prepared but not attached, and workers.dev stays on.
+  // The custom domain is attached (since the 2026-10-29 reopen), and workers.dev stays on.
   assert.match(toml, /^workers_dev = true$/m);
-  assert.doesNotMatch(toml, /^routes\s*=/m);
+  assert.match(toml, /^routes\s*=\s*\[\s*\{ pattern = "push\.artimer\.win", custom_domain = true \},\s*\]/m);
 });

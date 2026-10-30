@@ -115,10 +115,12 @@ in `push-server/README.md`):
 - **Edge firewall** (once the custom domain `push.artimer.win` is attached): one
   Cloudflare rate-limiting rule blocks an IP for 10 s after 30 API requests in
   10 s, before the Worker runs.
-- **Worker rate limits**: 120 requests/min per IP; 10 `/subscribe` per IP and
+- **Worker rate limits**: 120 API calls (POSTs)/min per IP; 10 `/subscribe` per IP and
   10 test pushes per subscription per minute; 30 writes (`/schedule`, `/sync`,
-  `/cancel`) per minute per IP and per subscription. Over a limit: HTTP 429,
-  with nothing read from or written to the database.
+  `/cancel`, `/test`, `/unsubscribe`) per minute per IP and per subscription
+  (write limit runs before any D1 lookup; `/test` still also has the per-sub
+  strict cap). Over a limit: HTTP 429, with nothing read from or written to the
+  database.
 - **Origin check**: POSTs must come from the app's own web origins.
 - **Input limits**: 512 KB bodies, 300 alerts per subscription, 35 days ahead,
   only real push-service endpoints, at most 5,000 subscriptions, and unused
@@ -206,6 +208,10 @@ cd build/web && python3 -m http.server 8080      # local test: http://127.0.0.1:
 `build_web.sh` does the following:
 - Runs `flutter build web --release --no-web-resources-cdn`, so CanvasKit and
   fonts are served from your own host and the app works offline.
+- Checks that `web/fonts/fallback/` has every fallback font (emoji, CJK,
+  symbols, ...) this Flutter SDK can request; `web/flutter_bootstrap.js` sets
+  `fontFallbackBaseUrl` to it, so the app never contacts fonts.gstatic.com.
+  After a Flutter upgrade, run `tool/fetch_fallback_fonts.py` once.
 - Deletes Flutter's deprecated `flutter_service_worker.js`.
 - Runs `tool/gen_sw.py`, which writes the content-hashed cache version and
   precache list into `build/web/sw.js`.
@@ -257,7 +263,9 @@ Hosting (static HTTPS, free), pick one:
 - **Privacy (v4.2)**: Settings → Privacy shows a short summary and opens the full
   notice (`lib/screens/privacy_screen.dart`, text in `lib/privacy/privacy_text.dart`).
   The same notice is a standalone page at **https://artimer.win/privacy.html**
-  (`web/privacy.html`: no scripts, no cookies, links back to `/`). A test checks that
+  (`web/privacy.html`: no scripts of its own, no cookies, links back to `/`; on the live
+  site Cloudflare Web Analytics' automatic setup injects its beacon at the edge, as on
+  every page, and the CSP in `web/_headers` allows it). A test checks that
   the HTML and the in-app text match, so edit both together. The service worker sends
   navigations to `/privacy(.html)` to the network first, with the precached copy as
   the offline fallback, so the app shell never takes over that URL. Settings → Alerts

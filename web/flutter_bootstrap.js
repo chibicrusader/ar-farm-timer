@@ -14,6 +14,9 @@ _flutter.loader.load({
   config: arEngineConfig,
   onEntrypointLoaded: async function (engineInitializer) {
     const appRunner = await engineInitializer.initializeEngine(arEngineConfig);
+    // First launch: the app starts only after Agree on the "Before you use"
+    // notice (web/consent.js). The engine is already loaded meanwhile.
+    if (window.arConsent) await window.arConsent.ready;
     await appRunner.runApp();
   },
 });
