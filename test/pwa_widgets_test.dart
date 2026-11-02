@@ -310,6 +310,82 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
+    testWidgets('M1: Disable while the browser unsubscribe hangs, then restart: never /subscribe or /sync', (
+      tester,
+    ) async {
+      const granted = PwaInfo(isWeb: true, ios: true, standalone: true, pushSupported: true, permission: 'granted');
+      final bridge = FakeBridge(info: granted)..currentSubscription = (() => null);
+      final (_, push) = await pump(tester, bridge);
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      bridge.currentSubscription = null; // the browser now holds a subscription
+      await tester.tap(find.byKey(const Key('enableAlerts')));
+      await tester.pumpAndSettle();
+      expect(push!.active, isTrue);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      bridge.disableResult = () => Completer<void>().future; // browser side hangs: subscription stays
+      await tester.tap(find.text('Disable'));
+      await tester.pump();
+      expect(find.text('Turning off alerts…'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 21));
+      await tester.pump();
+      expect(push.active, isFalse);
+      await tester.pumpWidget(const SizedBox());
+
+      // Restart with the same storage (no fresh in-memory prefs).
+      final paths2 = <String>[];
+      final push2 = PushAlertService(
+        client: MockClient((r) async {
+          paths2.add(r.url.path);
+          final body = r.url.path == '/subscribe' ? {'subscriptionId': 'sub-x'} : {'ok': true};
+          return http.Response(jsonEncode(body), 200);
+        }),
+        defaultServerUrl: 'https://srv.test',
+        currentSubscription: bridge.currentPushSubscription,
+      );
+      final controller2 = TimerController(
+        repository: TimerRepository(),
+        notifications: CompositeNotificationService([NoopNotificationService(), push2]),
+      );
+      await controller2.notifications.init();
+      bridge.calls.clear();
+      bridge.disableResult = null; // this time the browser unsubscribe works
+      await tester.pumpWidget(
+        FarmTimerApp(
+          controller: controller2,
+          catalog: CatalogService(bundle: _Bundle()),
+          bridge: bridge,
+          push: push2,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(paths2, isNot(contains('/subscribe')));
+      expect(paths2, isNot(contains('/sync')));
+      expect(push2.active, isFalse);
+      expect(bridge.calls, contains('disablePush')); // leftover browser subscription removed quietly
+      expect(bridge.calls.where((c) => c.startsWith('enablePush')), isEmpty);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('L1: a timed-out Enable drops its late result', (tester) async {
+      final late = Completer<String>();
+      final bridge = FakeBridge(info: installed)..enableResult = (() => late.future);
+      final (_, push) = await pump(tester, bridge);
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('enableAlerts')));
+      await tester.pump(const Duration(seconds: 46));
+      await tester.pump();
+      expect(find.textContaining('took too long'), findsOneWidget);
+      late.complete(bridge.subscriptionJson); // the browser answers after all
+      await tester.pumpAndSettle();
+      expect(paths, isNot(contains('/subscribe')));
+      expect(push!.active, isFalse);
+      expect(find.textContaining('took too long'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    });
+
     testWidgets('startup: permission granted + browser subscription + no saved id -> re-linked quietly', (
       tester,
     ) async {

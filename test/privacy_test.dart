@@ -192,7 +192,17 @@ void main() {
     expect(index.indexOf('<script src="consent.js"></script>'), greaterThan(0));
     expect(index.indexOf('consent.js'), lessThan(index.indexOf('flutter_bootstrap.js')));
     expect(index, contains('<link rel="stylesheet" href="consent.css">'));
-    expect(File('web/flutter_bootstrap.js').readAsStringSync(), contains('await window.arConsent.ready'));
+    final boot = File('web/flutter_bootstrap.js').readAsStringSync();
+    expect(boot, contains('await window.arConsent.ready'));
+    // Fail closed: no notice script, no app.
+    expect(boot, contains('if (!window.arConsent || !window.arConsent.ready) {'));
+    expect(boot, isNot(contains('if (window.arConsent) await')));
+    // The offline shell always carries the notice.
+    final sw = File('web/sw.js').readAsStringSync();
+    final critical = RegExp(r'const CRITICAL = \[(.*?)\];').firstMatch(sw)![1]!;
+    for (final f in ["'./'", "'index.html'", "'consent.js'", "'consent.css'", "'flutter_bootstrap.js'"]) {
+      expect(critical, contains(f), reason: f);
+    }
   });
 
   test('web/privacy.html carries the same notice as the in-app page', () {

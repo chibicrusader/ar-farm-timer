@@ -490,4 +490,167 @@ void main() {
       expect(requests, isEmpty);
     });
   });
+
+  group('user Disable is never undone by itself', () {
+    const browserSub = '{"endpoint":"https://web.push.apple.com/x","keys":{"p256dh":"a","auth":"b"}}';
+
+    Future<PushAlertService> fresh({Future<String?> Function()? current, http.Client? c}) async {
+      final p = PushAlertService(
+        client: c ?? client(),
+        defaultServerUrl: 'https://srv.test',
+        currentSubscription: current ?? () async => browserSub,
+      );
+      await p.init();
+      return p;
+    }
+
+    test(
+      'after Disable (browser unsubscribe hung), a restart never re-subscribes; it removes the browser sub',
+      () async {
+        final p = await fresh();
+        await p.register(browserSub, []);
+        await p.unregister(); // the browser-side disablePush hung: the browser keeps its subscription
+        expect(p.userDisabled, isTrue);
+        requests.clear();
+
+        final restarted = await fresh(); // same prefs, new app start
+        expect(restarted.userDisabled, isTrue);
+        var browserDisables = 0;
+        await restarted.startupMaintenance(
+          permissionGranted: true,
+          disableBrowser: () async => browserDisables++,
+          timers: () => [_t('a', const Duration(hours: 1))],
+        );
+        expect(requests.map((r) => r.url.path), isNot(contains('/subscribe')));
+        expect(requests.map((r) => r.url.path), isNot(contains('/sync')));
+        expect(requests, isEmpty); // the push server is not called at all
+        expect(browserDisables, 1);
+        expect(restarted.active, isFalse);
+        expect(await restarted.relinkSilently(() => []), isFalse);
+        expect(requests, isEmpty);
+      },
+    );
+
+    test('after Disable with no browser subscription left: nothing to do', () async {
+      final p = await fresh(current: () async => null);
+      await p.register(browserSub, []);
+      await p.unregister();
+      requests.clear();
+      var browserDisables = 0;
+      await p.startupMaintenance(
+        permissionGranted: true,
+        disableBrowser: () async => browserDisables++,
+        timers: () => [],
+      );
+      expect(browserDisables, 0);
+      expect(requests, isEmpty);
+    });
+
+    test('startup cleanup never throws (browser lookup or unsubscribe fails)', () async {
+      final p = await fresh(current: () async => throw StateError('no service worker'));
+      await p.unregister();
+      await p.startupMaintenance(permissionGranted: true, disableBrowser: () async {}, timers: () => []);
+      final q = await fresh();
+      await q.startupMaintenance(
+        permissionGranted: true,
+        disableBrowser: () async => throw StateError('hung'),
+        timers: () => [],
+      );
+      expect(q.active, isFalse);
+    });
+
+    test('the explicit Enable (register) clears the flag; re-link works again afterwards', () async {
+      final p = await fresh();
+      await p.unregister();
+      expect(p.userDisabled, isTrue);
+      await p.register(browserSub, []);
+      expect(p.userDisabled, isFalse);
+      expect((await fresh()).userDisabled, isFalse);
+    });
+
+    test('without a Disable, startup still re-links quietly', () async {
+      final p = await fresh();
+      await p.startupMaintenance(permissionGranted: true, disableBrowser: () async => fail('no'), timers: () => []);
+      expect(p.active, isTrue);
+      expect(requests.map((r) => r.url.path), ['/subscribe', '/sync']);
+    });
+
+    test('permission not granted: no re-link', () async {
+      final p = await fresh();
+      await p.startupMaintenance(permissionGranted: false, disableBrowser: () async {}, timers: () => []);
+      expect(p.active, isFalse);
+      expect(requests, isEmpty);
+    });
+
+    test('Disable while a re-link is in flight wins (L2): the new id is not kept and is unsubscribed', () async {
+      final gate = Completer<void>();
+      final c = MockClient((req) async {
+        requests.add(req);
+        if (req.url.path == '/subscribe') await gate.future;
+        final body = req.url.path == '/subscribe' ? {'subscriptionId': 'sub-new'} : {'ok': true};
+        return http.Response(jsonEncode(body), 200);
+      });
+      final p = await fresh(c: c);
+      final relink = p.relinkSilently(() => []);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      await p.unregister(); // user taps Disable meanwhile
+      gate.complete();
+      expect(await relink, isFalse);
+      expect(p.active, isFalse);
+      expect(p.subscriptionId, isNull);
+      expect(requests.map((r) => r.url.path), ['/subscribe', '/unsubscribe']);
+      expect(bodyOf(requests.last)['subscriptionId'], 'sub-new');
+      requests.clear();
+      final restarted = await fresh(c: c);
+      expect(restarted.active, isFalse);
+      expect(restarted.userDisabled, isTrue);
+    });
+
+    test('register(isCurrent: false) drops a late result (L1)', () async {
+      final p = await fresh();
+      expect(await p.register(browserSub, [], isCurrent: () => false), isFalse);
+      expect(p.active, isFalse);
+      expect(requests.map((r) => r.url.path), ['/subscribe']); // no /sync
+      expect((await fresh()).subscriptionId, isNull);
+    });
+
+    test('failed /unsubscribe is retried at startup; 404 counts as done; never the live id', () async {
+      var reachable = false;
+      final c = MockClient((req) async {
+        if (!reachable) throw http.ClientException('offline', req.url);
+        requests.add(req);
+        final body = req.url.path == '/subscribe' ? {'subscriptionId': 'sub-1'} : {'ok': true};
+        return http.Response(jsonEncode(body), 200);
+      });
+      reachable = true;
+      final p = await fresh(c: c);
+      await p.register(browserSub, []);
+      reachable = false;
+      await p.unregister(); // offline: remembered
+      reachable = true;
+      requests.clear();
+      final restarted = await fresh(c: c, current: () async => null);
+      await restarted.startupMaintenance(permissionGranted: true, disableBrowser: () async {}, timers: () => []);
+      expect(requests.map((r) => '${r.url.path}:${bodyOf(r)['subscriptionId']}'), ['/unsubscribe:sub-1']);
+      requests.clear();
+      await restarted.startupMaintenance(permissionGranted: true, disableBrowser: () async {}, timers: () => []);
+      expect(requests, isEmpty); // done, not retried again
+
+      // Pending id equal to a re-enabled (same endpoint => same id) subscription is dropped, not unsubscribed.
+      reachable = false;
+      await restarted.register(browserSub, []).catchError((_) => false); // offline: no change
+      reachable = true;
+      await restarted.register(browserSub, []); // sub-1 again
+      reachable = false;
+      await restarted.unregister(); // pending = sub-1
+      reachable = true;
+      await restarted.register(browserSub, []); // re-enabled, same id sub-1: pending cleared
+      requests.clear();
+      final again = await fresh(c: c);
+      await again.startupMaintenance(permissionGranted: true, disableBrowser: () async {}, timers: () => []);
+      expect(requests.map((r) => r.url.path), isNot(contains('/unsubscribe')));
+      expect(again.active, isTrue);
+    });
+  });
 }

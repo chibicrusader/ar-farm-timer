@@ -39,11 +39,17 @@ class _FarmTimerAppState extends State<FarmTimerApp> {
     unawaited(
       widget.controller.load().then((_) {
         widget.controller.startTicking();
-        // Alerts were on in this browser but the app lost its subscription
-        // id: link the browser's existing push subscription again, quietly.
+        // Quietly: re-link a lost subscription id, or finish an earlier
+        // Disable whose browser side hung (see startupMaintenance).
         final push = widget.push;
-        if (push != null && info.permission == 'granted') {
-          unawaited(push.relinkSilently(() => widget.controller.timers));
+        if (push != null) {
+          unawaited(
+            push.startupMaintenance(
+              permissionGranted: info.permission == 'granted',
+              disableBrowser: widget.bridge.disablePush,
+              timers: () => widget.controller.timers,
+            ),
+          );
         }
       }),
     );

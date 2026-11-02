@@ -16,11 +16,16 @@ async function cleanResponse(resp) {
   return new Response(body, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
 }
 
-// Files the app can't start without. Only these must precache for the
-// install to succeed; anything else that fails (a network blip, a bot check
-// on one URL) is fetched and cached on first use instead, so one bad file
-// never leaves the app without a service worker (and so without push alerts).
-const CRITICAL = ['main.dart.js', 'flutter_bootstrap.js', 'flutter.js', 'pwa.js'];
+// Files the app can't start without, including the shell and the "Before
+// you use" notice (consent.js/.css), so an offline start never runs a shell
+// without its notice. Only these must precache for the install to succeed;
+// anything else that fails (a network blip, a bot check on one URL) is
+// fetched and cached on first use instead, so one bad file never leaves the
+// app without a service worker (and so without push alerts). CanvasKit
+// (~7 MB) is deliberately not required: it isn't security-relevant, and
+// making the largest download mandatory would make installs on flaky
+// connections fail most often; it is cached on first use.
+const CRITICAL = ['./', 'index.html', 'main.dart.js', 'flutter_bootstrap.js', 'flutter.js', 'pwa.js', 'consent.js', 'consent.css'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {

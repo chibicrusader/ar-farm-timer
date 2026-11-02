@@ -62,6 +62,15 @@ class PushAlertService extends ChangeNotifier implements NotificationService {
   static const _kLegacyServer = 'push_server_url';
   static const _kSub = 'push_subscription_id';
 
+  /// Set by [unregister] (the user turned alerts off), cleared only by
+  /// [register] (the explicit Enable). While set, nothing re-links or
+  /// re-subscribes by itself.
+  static const _kDisabled = 'push_user_disabled';
+
+  /// Subscription id whose /unsubscribe couldn't reach the server; retried
+  /// at startup ([startupMaintenance]).
+  static const _kPendingUnsub = 'push_pending_unsubscribe';
+
   final http.Client _client;
   final SharedPreferencesAsync _prefs;
   final String _defaultServerUrl;
@@ -73,6 +82,7 @@ class PushAlertService extends ChangeNotifier implements NotificationService {
   String _serverUrl = '';
   String _fallbackUrl = '';
   String? _subscriptionId;
+  bool _userDisabled = false;
   String? _vapidKey;
   String? lastError;
 
@@ -83,6 +93,9 @@ class PushAlertService extends ChangeNotifier implements NotificationService {
   bool get hasServer => _serverUrl.isNotEmpty;
   bool get active => hasServer && _subscriptionId != null;
 
+  /// The user turned alerts off (see [_kDisabled]).
+  bool get userDisabled => _userDisabled;
+
   @override
   NotificationMode get mode => active ? NotificationMode.push : NotificationMode.inAppOnly;
 
@@ -92,6 +105,7 @@ class PushAlertService extends ChangeNotifier implements NotificationService {
     final fallback = normalizeUrl(_fallbackServerUrl);
     _fallbackUrl = _serverUrl.isEmpty || fallback == _serverUrl ? '' : fallback;
     _subscriptionId = await _prefs.getString(_kSub);
+    _userDisabled = await _prefs.getBool(_kDisabled) ?? false;
     final legacy = await _prefs.getString(_kLegacyServer);
     if (legacy != null) {
       // A subscription made against a different (custom) server is unknown
@@ -180,28 +194,97 @@ class PushAlertService extends ChangeNotifier implements NotificationService {
   }
 
   /// Registers a browser PushSubscription (JSON from the bridge) and syncs
-  /// all pending timers.
-  Future<void> register(String subscriptionJson, List<FarmTimer> timers) async {
+  /// all pending timers. This is the explicit "Enable alerts" path: it
+  /// clears the user's earlier Disable. [isCurrent] lets a caller that has
+  /// given up on this attempt (timeout) drop a late result: when it returns
+  /// false after /subscribe, nothing is saved and false is returned.
+  Future<bool> register(String subscriptionJson, List<FarmTimer> timers, {bool Function()? isCurrent}) async {
     final sub = jsonDecode(subscriptionJson);
     final data = await _call('/subscribe', {'subscription': sub});
-    _subscriptionId = data['subscriptionId'] as String;
-    await _prefs.setString(_kSub, _subscriptionId!);
+    if (isCurrent != null && !isCurrent()) {
+      logDebug('push: dropped a late Enable result');
+      return false;
+    }
+    final id = data['subscriptionId'] as String;
+    _subscriptionId = id;
+    await _prefs.setString(_kSub, id);
+    if (_userDisabled) {
+      _userDisabled = false;
+      await _prefs.remove(_kDisabled);
+    }
+    // Same endpoint => the server may hand back the id we failed to
+    // unsubscribe earlier: never unsubscribe the live one later.
+    if (await _prefs.getString(_kPendingUnsub) == id) await _prefs.remove(_kPendingUnsub);
     lastError = null;
     notifyListeners();
     await syncAll(timers);
+    return true;
   }
 
+  /// The user's Disable: forgets the subscription locally, marks alerts as
+  /// turned off (so nothing re-links them by itself) and tells the server.
+  /// If the server can't be reached, the id is kept and retried at startup.
   Future<void> unregister() async {
     final id = _subscriptionId;
     _subscriptionId = null;
-    await _prefs.remove(_kSub);
+    _userDisabled = true;
     notifyListeners();
-    if (id != null && hasServer) {
-      try {
-        await _call('/unsubscribe', {'subscriptionId': id});
-      } catch (e) {
-        logDebug('unsubscribe failed', e);
+    await _prefs.setBool(_kDisabled, true);
+    await _prefs.remove(_kSub);
+    if (id != null && hasServer) await _unsubscribeOnServer(id);
+  }
+
+  /// /unsubscribe [id]; on a connection/server failure remembers it for a
+  /// later retry. 404/410 (already gone) count as done.
+  Future<void> _unsubscribeOnServer(String id) async {
+    try {
+      await _call('/unsubscribe', {'subscriptionId': id});
+      await _prefs.remove(_kPendingUnsub);
+    } catch (e) {
+      final status = e is PushServerException ? e.status : null;
+      final retry = status == null || status == 429 || status >= 500;
+      logDebug('unsubscribe failed${retry ? ' (will retry)' : ''}', e);
+      if (retry) {
+        await _prefs.setString(_kPendingUnsub, id);
+      } else {
+        await _prefs.remove(_kPendingUnsub);
       }
+    }
+  }
+
+  /// Startup housekeeping; never throws, never prompts, shows no error.
+  /// - Retries a failed /unsubscribe.
+  /// - After the user's Disable: if the browser still holds a push
+  ///   subscription (its unsubscribe hung or failed), removes it quietly
+  ///   with [disableBrowser]; the push server is not called.
+  /// - Otherwise, with [permissionGranted]: [relinkSilently].
+  Future<void> startupMaintenance({
+    required bool permissionGranted,
+    required Future<void> Function() disableBrowser,
+    required List<FarmTimer> Function() timers,
+  }) async {
+    try {
+      final pending = await _prefs.getString(_kPendingUnsub);
+      if (pending != null && hasServer) {
+        if (pending == _subscriptionId) {
+          await _prefs.remove(_kPendingUnsub);
+        } else {
+          await _unsubscribeOnServer(pending);
+        }
+      }
+      if (_userDisabled) {
+        final get = _currentSubscription;
+        if (get == null) return;
+        final json = await get().timeout(const Duration(seconds: 25));
+        if (json != null && json.isNotEmpty && _userDisabled) {
+          await disableBrowser().timeout(const Duration(seconds: 25));
+          logDebug('push: removed the browser subscription left after Disable');
+        }
+        return;
+      }
+      if (permissionGranted) await relinkSilently(timers);
+    } catch (e) {
+      logDebug('push: startup maintenance failed', e);
     }
   }
 
@@ -234,14 +317,20 @@ class PushAlertService extends ChangeNotifier implements NotificationService {
 
   Future<String?> _registerExisting() async {
     final get = _currentSubscription;
-    if (get == null || !hasServer) return null;
+    if (get == null || !hasServer || _userDisabled) return null;
     try {
       // serviceWorker.ready never settles without a service worker: bound it.
       final json = await get().timeout(const Duration(seconds: 10));
-      if (json == null || json.isEmpty) return null; // permission revoked / unsubscribed
+      if (json == null || json.isEmpty || _userDisabled) return null; // permission revoked / unsubscribed
       final data = await _call('/subscribe', {'subscription': jsonDecode(json)});
       final id = data['subscriptionId'];
       if (id is! String || id.isEmpty) return null;
+      if (_userDisabled) {
+        // The user pressed Disable while this was in flight: undo it.
+        logDebug('push: Disable during re-register; not keeping it');
+        await _unsubscribeOnServer(id);
+        return null;
+      }
       _subscriptionId = id;
       await _prefs.setString(_kSub, id);
       logDebug('push: re-registered after the server forgot the subscription');
@@ -258,8 +347,9 @@ class PushAlertService extends ChangeNotifier implements NotificationService {
   /// and syncs [timers]. Only call when notification permission is already
   /// granted. Never prompts (it only reads the existing subscription), never
   /// throws, and never shows an error. Returns true when re-linked.
+  /// Does nothing after the user's Disable ([userDisabled]).
   Future<bool> relinkSilently(List<FarmTimer> Function() timers) async {
-    if (_subscriptionId != null || !hasServer || _currentSubscription == null) return false;
+    if (_subscriptionId != null || _userDisabled || !hasServer || _currentSubscription == null) return false;
     try {
       final id = await _resubscribe(null);
       if (id == null) return false;
