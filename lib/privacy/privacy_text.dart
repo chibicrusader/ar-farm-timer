@@ -2,6 +2,7 @@
 /// checked against the static web/privacy.html.
 library;
 
+// Set your own contact email (shown in the privacy notice; keep web/privacy.html in sync).
 const privacyEmail = 'contact@example.com';
 const privacyUrl = 'https://artimer.win/privacy.html';
 const privacyTitle = 'Privacy Notice: AR Farm Timer';
