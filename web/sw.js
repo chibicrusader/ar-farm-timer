@@ -16,11 +16,23 @@ async function cleanResponse(resp) {
   return new Response(body, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
 }
 
+// Files the app can't start without. Only these must precache for the
+// install to succeed; anything else that fails (a network blip, a bot check
+// on one URL) is fetched and cached on first use instead, so one bad file
+// never leaves the app without a service worker (and so without push alerts).
+const CRITICAL = ['main.dart.js', 'flutter_bootstrap.js', 'flutter.js', 'pwa.js'];
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) =>
-      cache.addAll(PRECACHE.map((u) => new Request(u, { cache: 'reload' })))),
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    // cache.add rejects non-OK responses, so an error page is never cached.
+    const results = await Promise.allSettled(
+      PRECACHE.map((u) => cache.add(new Request(u, { cache: 'reload' }))));
+    const failed = PRECACHE.filter((u, i) => results[i].status === 'rejected');
+    if (failed.length) console.warn('sw: not precached, will be fetched on first use:', failed);
+    const missing = failed.filter((u) => CRITICAL.includes(u));
+    if (missing.length) throw new Error('sw: required files failed to download: ' + missing.join(', '));
+  })());
   // No skipWaiting() here: an update waits until the page asks (update banner)
   // or every tab is closed, so a running app never mixes two versions.
   // Exception: the old pages.dev address takes the update at once (the page

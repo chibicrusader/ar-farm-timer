@@ -56,6 +56,7 @@ class _AlertsSectionState extends State<AlertsSection> with AutomaticKeepAliveCl
   /// anything else that mentions a URL gets the generic message.
   static String _errorText(Object e) {
     if (e is PushServerException) return e.message;
+    if (e is TimeoutException) return e.message ?? enableTimeoutMessage;
     final s = '$e';
     return s.contains('://') ? PushAlertService.unreachableMessage : s;
   }
@@ -74,10 +75,22 @@ class _AlertsSectionState extends State<AlertsSection> with AutomaticKeepAliveCl
     unawaited(_finishEnable(push, pending));
   }
 
+  /// Upper bound for "Enable alerts" (permission, service worker, push
+  /// service, alert server), so the button never stays disabled. pwa.js
+  /// also limits each browser step. If the browser finishes after this, the
+  /// subscription is still registered (the server dedupes by endpoint), and
+  /// the startup re-link picks it up otherwise.
+  static const enableTimeout = Duration(seconds: 45);
+  static const disableTimeout = Duration(seconds: 20);
+  static const enableTimeoutMessage =
+      'Turning on alerts took too long. If your phone asked about notifications, answer it, then tap Enable alerts again.';
+
   Future<void> _finishEnable(PushAlertService push, Future<String> pending) async {
     try {
-      final sub = await pending;
-      await push.register(sub, widget.controller.timers);
+      await (() async {
+        final sub = await pending;
+        await push.register(sub, widget.controller.timers);
+      })().timeout(enableTimeout, onTimeout: () => throw TimeoutException(enableTimeoutMessage));
       _pushMessage = null;
       if (mounted) showSnack(context, 'Alerts enabled. Timers will notify you even when the app is closed.');
     } catch (e) {
@@ -89,9 +102,14 @@ class _AlertsSectionState extends State<AlertsSection> with AutomaticKeepAliveCl
 
   Future<void> _disableAlerts() async {
     setState(() => _busy = true);
-    await widget.bridge.disablePush().catchError((_) {});
-    await widget.push!.unregister();
-    if (mounted) setState(() => _busy = false);
+    try {
+      // The browser side may hang or fail (no service worker): the server
+      // side is unregistered regardless, so alerts stop either way.
+      await widget.bridge.disablePush().timeout(disableTimeout).catchError((_) {});
+      await widget.push!.unregister().timeout(disableTimeout).catchError((_) {});
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _test() async {
@@ -158,6 +176,18 @@ class _AlertsSectionState extends State<AlertsSection> with AutomaticKeepAliveCl
           ],
         ],
       ),
+      if (_busy)
+        Padding(
+          key: const Key('alertsBusy'),
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(
+            children: [
+              const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(push.active ? 'Turning off alerts…' : 'Turning on alerts…', style: small)),
+            ],
+          ),
+        ),
       if (!push.active)
         Padding(
           key: const Key('alertPrivacyNote'),

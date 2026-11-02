@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:archeragefarmtimer/app.dart';
@@ -48,6 +49,7 @@ void main() {
               return http.Response(jsonEncode(body), 200);
             }),
             defaultServerUrl: 'https://srv.test',
+            currentSubscription: bridge.currentPushSubscription,
           )
         : null;
     final controller = TimerController(
@@ -241,5 +243,109 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.timers.single.id, 'imp1');
     await tester.pumpWidget(const SizedBox());
+  });
+
+  group('alerts never stay stuck', () {
+    const installed = PwaInfo(isWeb: true, ios: true, standalone: true, pushSupported: true, permission: 'default');
+
+    FilledButton enableButton(WidgetTester tester) =>
+        tester.widget<FilledButton>(find.ancestor(of: find.text('Enable alerts'), matching: find.byType(FilledButton)));
+
+    testWidgets('a hanging browser enable times out: spinner while busy, then an error and the button again', (
+      tester,
+    ) async {
+      final bridge = FakeBridge(info: installed)..enableResult = (() => Completer<String>().future);
+      final (_, push) = await pump(tester, bridge);
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('enableAlerts')));
+      await tester.pump();
+      expect(find.byKey(const Key('alertsBusy')), findsOneWidget);
+      expect(find.text('Turning on alerts…'), findsOneWidget);
+      expect(enableButton(tester).onPressed, isNull);
+
+      await tester.pump(const Duration(seconds: 46));
+      await tester.pump();
+      expect(find.byKey(const Key('alertsBusy')), findsNothing);
+      expect(find.textContaining('took too long'), findsOneWidget);
+      expect(enableButton(tester).onPressed, isNotNull);
+      expect(push!.active, isFalse);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('a browser error during enable shows it and re-enables the button', (tester) async {
+      final bridge = FakeBridge(info: installed)
+        ..enableResult = (() => Future<String>.error(StateError('Notification permission was denied.')));
+      await pump(tester, bridge);
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('enableAlerts')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('permission was denied'), findsOneWidget);
+      expect(enableButton(tester).onPressed, isNotNull);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('a hanging browser disable still turns alerts off', (tester) async {
+      final bridge = FakeBridge(info: installed);
+      final (_, push) = await pump(tester, bridge);
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('enableAlerts')));
+      await tester.pumpAndSettle();
+      expect(push!.active, isTrue);
+      await tester.pump(const Duration(seconds: 5)); // snackbar
+      await tester.pumpAndSettle();
+
+      bridge.disableResult = () => Completer<void>().future;
+      await tester.tap(find.text('Disable'));
+      await tester.pump();
+      expect(find.text('Turning off alerts…'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 21));
+      await tester.pump();
+      expect(push.active, isFalse);
+      expect(find.byKey(const Key('alertsBusy')), findsNothing);
+      expect(enableButton(tester).onPressed, isNotNull);
+      expect(paths, contains('/unsubscribe'));
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('startup: permission granted + browser subscription + no saved id -> re-linked quietly', (
+      tester,
+    ) async {
+      final bridge = FakeBridge(
+        info: const PwaInfo(isWeb: true, ios: true, standalone: true, pushSupported: true, permission: 'granted'),
+      );
+      final (controller, push) = await pump(tester, bridge);
+      await tester.pumpAndSettle();
+      expect(bridge.calls, contains('currentPushSubscription'));
+      expect(bridge.calls.where((c) => c.startsWith('enablePush')), isEmpty); // no prompt
+      expect(paths, containsAllInOrder(['/subscribe', '/sync']));
+      expect(push!.active, isTrue);
+      expect(controller.notifications.mode, NotificationMode.push);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('startup: permission not granted -> no re-link attempt', (tester) async {
+      final bridge = FakeBridge(info: installed);
+      final (_, push) = await pump(tester, bridge);
+      await tester.pumpAndSettle();
+      expect(bridge.calls, isNot(contains('currentPushSubscription')));
+      expect(paths, isNot(contains('/subscribe')));
+      expect(push!.active, isFalse);
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('startup: permission granted but no browser subscription -> stays off, no error', (tester) async {
+      final bridge = FakeBridge(
+        info: const PwaInfo(isWeb: true, ios: true, standalone: true, pushSupported: true, permission: 'granted'),
+      )..currentSubscription = (() => null);
+      final (_, push) = await pump(tester, bridge);
+      await tester.pumpAndSettle();
+      expect(paths, isNot(contains('/subscribe')));
+      expect(push!.active, isFalse);
+      expect(push.lastError, isNull);
+      await tester.pumpWidget(const SizedBox());
+    });
   });
 }

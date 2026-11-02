@@ -20,18 +20,30 @@ class FakeBridge implements PwaBridge {
     return persist = PersistState.granted;
   }
 
+  /// When set, enablePush/disablePush return this instead (e.g. a future
+  /// that never completes, to simulate a hanging browser).
+  Future<String> Function()? enableResult;
+  Future<void> Function()? disableResult;
+
+  /// The browser's existing subscription (null: none).
+  String? Function()? currentSubscription;
+
   @override
   Future<String> enablePush(String vapidPublicKey) {
     calls.add('enablePush:$vapidPublicKey');
-    return Future.value(subscriptionJson);
+    return enableResult?.call() ?? Future.value(subscriptionJson);
   }
 
   @override
-  Future<void> disablePush() async => calls.add('disablePush');
+  Future<void> disablePush() {
+    calls.add('disablePush');
+    return disableResult?.call() ?? Future.value();
+  }
+
   @override
   Future<String?> currentPushSubscription() async {
     calls.add('currentPushSubscription');
-    return subscriptionJson;
+    return currentSubscription == null ? subscriptionJson : currentSubscription!();
   }
 
   @override

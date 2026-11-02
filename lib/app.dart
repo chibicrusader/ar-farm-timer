@@ -35,10 +35,20 @@ class _FarmTimerAppState extends State<FarmTimerApp> {
     super.initState();
     _items = widget.catalog.load();
     unawaited(widget.catalog.loadZones().then(widget.controller.farms.setZones));
-    unawaited(widget.controller.load().then((_) => widget.controller.startTicking()));
+    final info = widget.bridge.info;
+    unawaited(
+      widget.controller.load().then((_) {
+        widget.controller.startTicking();
+        // Alerts were on in this browser but the app lost its subscription
+        // id: link the browser's existing push subscription again, quietly.
+        final push = widget.push;
+        if (push != null && info.permission == 'granted') {
+          unawaited(push.relinkSilently(() => widget.controller.timers));
+        }
+      }),
+    );
     // Installed web app: ask the browser to never auto-clear our storage.
     // (Safari decides silently; no prompt is shown.)
-    final info = widget.bridge.info;
     if (info.isWeb && info.standalone) unawaited(widget.bridge.requestPersist());
   }
 

@@ -418,4 +418,76 @@ void main() {
       expect(trace(), ['/test:sub-1']);
     });
   });
+
+  group('silent re-link on startup', () {
+    const browserSub = '{"endpoint":"https://web.push.apple.com/x","keys":{"p256dh":"a","auth":"b"}}';
+
+    PushAlertService svc(Future<String?> Function()? current) =>
+        PushAlertService(client: client(), defaultServerUrl: 'https://srv.test', currentSubscription: current);
+
+    test('no saved id + existing browser subscription: re-registers and syncs', () async {
+      final p = svc(() async => browserSub);
+      await p.init();
+      expect(p.active, isFalse);
+      expect(await p.relinkSilently(() => [_t('a', const Duration(hours: 1))]), isTrue);
+      expect(p.active, isTrue);
+      expect(p.subscriptionId, 'sub-1234567890abcdef');
+      expect(requests.map((r) => r.url.path), ['/subscribe', '/sync']);
+      expect(bodyOf(requests.first)['subscription'], jsonDecode(browserSub));
+      expect(bodyOf(requests.last)['alerts'], hasLength(1));
+      expect(p.lastError, isNull);
+    });
+
+    test('already linked: does nothing', () async {
+      final p = svc(() async => browserSub);
+      await p.init();
+      await p.register(browserSub, []);
+      requests.clear();
+      expect(await p.relinkSilently(() => []), isFalse);
+      expect(requests, isEmpty);
+    });
+
+    test('no browser subscription: does nothing', () async {
+      final p = svc(() async => null);
+      await p.init();
+      expect(await p.relinkSilently(() => []), isFalse);
+      expect(requests, isEmpty);
+      expect(p.active, isFalse);
+    });
+
+    test('no server, or no subscription lookup: does nothing', () async {
+      final a = PushAlertService(client: client(), defaultServerUrl: '', currentSubscription: () async => browserSub);
+      await a.init();
+      expect(await a.relinkSilently(() => []), isFalse);
+      final b = svc(null);
+      await b.init();
+      expect(await b.relinkSilently(() => []), isFalse);
+      expect(requests, isEmpty);
+    });
+
+    test('server error or unreachable: no throw, no visible error, stays off', () async {
+      statusFor = (_) => 500;
+      final p = svc(() async => browserSub);
+      await p.init();
+      expect(await p.relinkSilently(() => []), isFalse);
+      expect(p.active, isFalse);
+      expect(p.lastError, isNull);
+
+      final q = PushAlertService(
+        client: MockClient((r) async => throw http.ClientException('offline', r.url)),
+        defaultServerUrl: 'https://srv.test',
+        currentSubscription: () async => browserSub,
+      );
+      await q.init();
+      expect(await q.relinkSilently(() => []), isFalse);
+      expect(q.lastError, isNull);
+    });
+
+    test('browser lookup throws: no throw', () async {
+      final p = svc(() async => throw StateError('no service worker'));
+      await p.init();
+      expect(await p.relinkSilently(() => []), isFalse);
+      expect(requests, isEmpty);
+    });
+  });
 }

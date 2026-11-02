@@ -37,6 +37,39 @@
     return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   }
 
+  // Time limits for the push steps. Some iOS versions never settle these
+  // promises (no service worker, an interrupted permission prompt, a stuck
+  // push service); without a limit "Enable alerts" would wait forever.
+  const READY_MS = 10000;
+  const PERMISSION_MS = 60000;
+  const SUBSCRIBE_MS = 20000;
+  const MSG_NOT_READY = "The app's background service isn't ready yet. Close the app completely, open it again, wait a few seconds and try again.";
+  const MSG_PERMISSION = 'There was no answer to the notification request. Tap Enable alerts again and choose Allow.';
+  const MSG_SUBSCRIBE = "The phone's push service didn't answer. Check your connection and try again.";
+
+  // Rejects with Error(message) if [promise] hasn't settled after [ms].
+  function withTimeout(promise, ms, message) {
+    let timer;
+    const limit = new Promise(function (_, reject) {
+      timer = setTimeout(function () { reject(new Error(message)); }, ms);
+    });
+    return Promise.race([Promise.resolve(promise), limit]).finally(function () { clearTimeout(timer); });
+  }
+
+  // navigator.serviceWorker.ready, bounded. If no worker becomes active in
+  // time, registers sw.js once more and waits again before giving up.
+  function swReady() {
+    return withTimeout(navigator.serviceWorker.ready, READY_MS, MSG_NOT_READY).catch(function () {
+      return navigator.serviceWorker.register('sw.js').then(function (reg) {
+        registration = reg;
+        return withTimeout(navigator.serviceWorker.ready, READY_MS, MSG_NOT_READY);
+      }, function (e) {
+        console.warn('Service worker registration failed (retry)', e);
+        throw new Error(MSG_NOT_READY);
+      });
+    });
+  }
+
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('sw.js').then(function (reg) {
@@ -150,27 +183,32 @@
     enablePush: function (vapidPublicKey) {
       if (!pushSupported()) return Promise.reject(new Error('Push is not supported here. On iPhone, open the app from the Home Screen (iOS 16.4+).'));
       const permission = Notification.requestPermission(); // synchronous call inside the gesture
-      return Promise.resolve(permission).then(function (result) {
+      return withTimeout(permission, PERMISSION_MS, MSG_PERMISSION).then(function (result) {
         if (result !== 'granted') throw new Error('Notification permission was ' + result + '.');
-        return navigator.serviceWorker.ready;
+        return swReady();
       }).then(function (reg) {
-        return reg.pushManager.getSubscription().then(function (existing) {
+        return withTimeout(reg.pushManager.getSubscription(), SUBSCRIBE_MS, MSG_SUBSCRIBE).then(function (existing) {
           if (existing) return existing;
-          return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(vapidPublicKey) });
+          return withTimeout(
+            reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(vapidPublicKey) }),
+            SUBSCRIBE_MS, MSG_SUBSCRIBE);
         });
       }).then(function (sub) { return JSON.stringify(sub.toJSON()); });
     },
 
+    // The existing subscription ('' if none). Never prompts.
     currentSubscription: function () {
       if (!pushSupported()) return Promise.resolve('');
-      return navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); })
+      return swReady()
+        .then(function (reg) { return withTimeout(reg.pushManager.getSubscription(), SUBSCRIBE_MS, MSG_SUBSCRIBE); })
         .then(function (sub) { return sub ? JSON.stringify(sub.toJSON()) : ''; });
     },
 
     disablePush: function () {
       if (!pushSupported()) return Promise.resolve(true);
-      return navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); })
-        .then(function (sub) { return sub ? sub.unsubscribe() : true; });
+      return swReady()
+        .then(function (reg) { return withTimeout(reg.pushManager.getSubscription(), SUBSCRIBE_MS, MSG_SUBSCRIBE); })
+        .then(function (sub) { return sub ? withTimeout(sub.unsubscribe(), SUBSCRIBE_MS, MSG_SUBSCRIBE) : true; });
     },
 
     // Share sheet (iOS: "Save to Files") when available, else a download.

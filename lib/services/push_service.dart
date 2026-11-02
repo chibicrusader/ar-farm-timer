@@ -252,6 +252,27 @@ class PushAlertService extends ChangeNotifier implements NotificationService {
     }
   }
 
+  /// Startup re-link: with no saved subscription id (e.g. it was dropped
+  /// after the server forgot it, or app storage was cleared) but a push
+  /// subscription still in the browser, registers that subscription again
+  /// and syncs [timers]. Only call when notification permission is already
+  /// granted. Never prompts (it only reads the existing subscription), never
+  /// throws, and never shows an error. Returns true when re-linked.
+  Future<bool> relinkSilently(List<FarmTimer> Function() timers) async {
+    if (_subscriptionId != null || !hasServer || _currentSubscription == null) return false;
+    try {
+      final id = await _resubscribe(null);
+      if (id == null) return false;
+      lastError = null;
+      notifyListeners();
+      await syncAll(timers());
+      return true;
+    } catch (e) {
+      logDebug('push: silent re-link failed', e);
+      return false;
+    }
+  }
+
   static String alertId(FarmTimer t) => '${t.id}:${t.notificationId}';
   static String warningId(FarmTimer t) => '${alertId(t)}:wither';
 
