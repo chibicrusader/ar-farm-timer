@@ -11,6 +11,10 @@ import '../../services/timer_math.dart';
 import '../../theme/app_theme.dart';
 import 'settings_section.dart';
 
+/// Shown next to "Enable alerts": the browser's permission prompt names the
+/// site asking, so anything other than artimer.win is a notification scam.
+const alertsBrowserHint = 'Your browser should say artimer.win. If it says anything else, tap Block.';
+
 /// Settings > Alerts: wither warning lead time and push alerts on/off.
 /// Never shows the push server address.
 class AlertsSection extends StatefulWidget {
@@ -201,6 +205,12 @@ class _AlertsSectionState extends State<AlertsSection> with AutomaticKeepAliveCl
           ],
         ],
       ),
+      if (!push.active)
+        Padding(
+          key: const Key('alertBrowserHint'),
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(alertsBrowserHint, style: small?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        ),
       if (_busy)
         Padding(
           key: const Key('alertsBusy'),

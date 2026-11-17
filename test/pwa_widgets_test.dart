@@ -153,6 +153,7 @@ void main() {
     expect(push!.active, isTrue);
     expect(find.text('Send test alert'), findsOneWidget);
     expect(controller.notifications.mode, NotificationMode.push);
+    expect(find.byKey(const Key('alertBrowserHint')), findsNothing); // only shown before enabling
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('export')),

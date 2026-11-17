@@ -5,6 +5,7 @@ import 'package:archeragefarmtimer/app.dart';
 import 'package:archeragefarmtimer/platform/pwa_bridge.dart';
 import 'package:archeragefarmtimer/privacy/privacy_text.dart';
 import 'package:archeragefarmtimer/screens/privacy_screen.dart';
+import 'package:archeragefarmtimer/screens/settings/alerts_section.dart';
 import 'package:archeragefarmtimer/screens/settings_screen.dart';
 import 'package:archeragefarmtimer/services/catalog_service.dart';
 import 'package:archeragefarmtimer/services/notification_service.dart';
@@ -111,6 +112,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(privacyAlertNote), findsOneWidget); // next to "Enable alerts"
     expect(find.byKey(const Key('enableAlerts')), findsOneWidget);
+    expect(find.text(alertsBrowserHint), findsOneWidget); // scam hint next to "Enable alerts"
 
     final settingsList = find.descendant(of: find.byType(SettingsScreen), matching: find.byType(Scrollable)).first;
     await tester.scrollUntilVisible(find.byKey(const Key('privacyOpen')), 200, scrollable: settingsList);
