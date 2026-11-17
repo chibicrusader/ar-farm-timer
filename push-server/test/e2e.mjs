@@ -104,7 +104,15 @@ try {
   // immediate test push
   const t = await post('/test', { subscriptionId: id });
   assert.equal(t.body.pushStatus, 201);
-  assert.equal(received.at(-1).payload.notification.title, 'AR Farm Timer test alert');
+  assert.equal(received.at(-1).payload.notification.title, 'AR Farm Timer: Test alert'); // prefixed once
+
+  // a caller-supplied scary title/link is prefixed and de-linked (stolen subscription id)
+  const beforeScary = received.length;
+  await post('/schedule', { subscriptionId: id, alerts: [{ id: 'scary', fireAt: new Date(Date.now() - 500).toISOString(),
+    title: 'VIRUS DETECTED! Visit https://evil.example/fix', body: 'Call support at www.evil.example now' }] });
+  await sleep(3000);
+  const scary = received.slice(beforeScary).map((g) => g.payload.notification);
+  assert.deepEqual(scary.map((n) => [n.title, n.body]), [['AR Farm Timer: VIRUS DETECTED! Visit', 'Call support at now']]);
 
   // schedule: one due, one future, one cancelled before its time.
   // Due alerts go out via the scheduler alarm, without waiting for cron.
@@ -121,7 +129,7 @@ try {
   assert.equal((await post('/cancel', { subscriptionId: id, ids: ['goat:3'] })).body.cancelled, 1);
   await sleep(6000);
   const got = received.slice(before);
-  assert.deepEqual(got.map((g) => g.payload.notification.title), ['Rice is ready!']);
+  assert.deepEqual(got.map((g) => g.payload.notification.title), ['AR Farm Timer: Rice is ready!']);
   assert.equal(got[0].payload.web_push, 8030);
   assert.equal(got[0].payload.notification.navigate, 'https://example.test/app/');
   assert.equal(got[0].ttl, String(6 * 3600));
@@ -147,7 +155,7 @@ try {
   const beforeSync = received.length;
   await post('/sync', { subscriptionId: id, alerts: [{ id: 'rice:9', fireAt: new Date(Date.now() - 10).toISOString(), title: 'Rice again', body: '' }] });
   await sleep(2000);
-  assert.deepEqual(received.slice(beforeSync).map((g) => g.payload.notification.title), ['Rice again']);
+  assert.deepEqual(received.slice(beforeSync).map((g) => g.payload.notification.title), ['AR Farm Timer: Rice again']);
 
   // bulk: 12 timers in ONE /schedule request (with a cancel), all due together,
   // all delivered by the alarm (rearm hint path) without cron.

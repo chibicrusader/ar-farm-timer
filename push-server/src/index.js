@@ -170,8 +170,8 @@ function str(v, max) {
 // caller-supplied text, so a stolen id can't send scary titles or a link to
 // tap. Applied when alerts are stored and again when they are sent (rows
 // stored before this change).
-export const TITLE_PREFIX = 'AR Farm Timer: ';
-export const MAX_TITLE_LEN = 120; // final title, prefix included
+const TITLE_PREFIX = 'AR Farm Timer: ';
+const MAX_TITLE_LEN = 120; // final title, prefix included
 const MAX_ALERT_BODY_LEN = 300;
 const LINK_REMOVED = '';
 // The app's own domain may stay in text (bare host, optional path).

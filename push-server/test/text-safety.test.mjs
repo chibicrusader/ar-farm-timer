@@ -3,12 +3,15 @@
 // can't show arbitrary scary titles or links.  npm test
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { safeTitle, safeBody, stripLinks, buildPayload, parseAlerts, TITLE_PREFIX, MAX_TITLE_LEN } from '../src/index.js';
+import { safeTitle, safeBody, stripLinks, buildPayload, parseAlerts } from '../src/index.js';
+
+// Not exported from the Worker module: workerd rejects non-handler exports.
+const TITLE_PREFIX = 'AR Farm Timer: ';
+const MAX_TITLE_LEN = 120;
 
 const env = { APP_URL: 'https://artimer.win/' };
 
 test('titles get the prefix exactly once', () => {
-  assert.equal(TITLE_PREFIX, 'AR Farm Timer: ');
   assert.equal(safeTitle('Rice is ready!'), 'AR Farm Timer: Rice is ready!');
   assert.equal(safeTitle('AR Farm Timer: Test alert'), 'AR Farm Timer: Test alert'); // the /test message
   assert.equal(safeTitle('AR Farm Timer: AR Farm Timer: x'), 'AR Farm Timer: x');
@@ -23,11 +26,10 @@ test('titles get the prefix exactly once', () => {
 });
 
 test('titles stay within 120 chars, prefix included, cut with an ellipsis', () => {
-  assert.equal(MAX_TITLE_LEN, 120);
   const exact = 'y'.repeat(120 - TITLE_PREFIX.length);
   assert.equal(safeTitle(exact), TITLE_PREFIX + exact);
   const long = safeTitle('z'.repeat(200));
-  assert.equal(long.length, 120);
+  assert.equal(long.length, MAX_TITLE_LEN);
   assert.ok(long.endsWith('\u2026'));
   // never half a surrogate pair at the cut
   const emoji = safeTitle('\u{1F33E}'.repeat(100));
