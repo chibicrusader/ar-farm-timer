@@ -7,7 +7,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import nodeCrypto from 'node:crypto';
 import { getPlatformProxy } from 'wrangler';
-import worker, { sendDue, AlertScheduler, clientKey, pruneSubscriptions, touchStatements, resetCapPruneThrottle } from '../src/index.js';
+import worker, { buildPayload, sendDue, AlertScheduler, clientKey, pruneSubscriptions, touchStatements, resetCapPruneThrottle } from '../src/index.js';
 
 const MOCK = 9922;
 let proxy;
@@ -128,7 +128,7 @@ test('50 timers (100 alerts) in ONE /schedule request with a constant number of 
   // independent of the number of alerts (free-plan D1 allows 50 queries per invocation).
   assert.equal(queries, 4);
   const row = await proxy.env.DB.prepare('SELECT * FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, 't7:1').first();
-  assert.equal(row.title, 'Item 7 is ready!');
+  assert.equal(row.title, 'AR Farm Timer: Item 7 is ready!');
   assert.equal(row.url, 'https://artimer.win/');
   assert.equal(row.attempts, 0);
   const w = await proxy.env.DB.prepare('SELECT url FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, 't7:1:wither').first();
@@ -143,7 +143,7 @@ test('re-scheduling the same ids upserts (also duplicates inside one request)', 
   assert.equal(r.status, 200);
   assert.equal(await count(sub), 6);
   const row = await proxy.env.DB.prepare('SELECT title FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, 't1:1').first();
-  assert.equal(row.title, 'moved');
+  assert.equal(row.title, 'AR Farm Timer: moved');
 });
 
 test('/schedule with cancel replaces a harvested cycle in one request', async () => {
@@ -348,7 +348,7 @@ test('security: SQL metacharacters in ids and text are stored as plain data', as
   const r = await call('/schedule', { subscriptionId: sub, alerts: [{ id, fireAt: inMin(5), title: "a' OR '1'='1", body: '"; --' }] });
   assert.equal(r.status, 200);
   const row = await proxy.env.DB.prepare('SELECT * FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, id).first();
-  assert.equal(row.title, "a' OR '1'='1");
+  assert.equal(row.title, "AR Farm Timer: a' OR '1'='1");
   assert.equal((await call('/cancel', { subscriptionId: sub, ids: [id] })).body.cancelled, 1);
   assert.equal(await count(sub), 0);
 });
@@ -546,7 +546,7 @@ test('sendDue: an alert re-scheduled while its push is in flight is kept', async
   }
   const row = await proxy.env.DB.prepare('SELECT fire_at, title FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, 'r').first();
   assert.equal(row.fire_at, later);
-  assert.equal(row.title, 't2');
+  assert.equal(row.title, 'AR Farm Timer: t2');
 });
 
 test('scheduler: a /rearm that arrives while arm() queries D1 is not overwritten', async () => {
@@ -720,10 +720,10 @@ test('write limits: /schedule, /sync and /cancel count per IP and per subscripti
     assert.equal(r.status, 200, path);
     assert.deepEqual(keys, ['api:ip:203.0.113.9', 'write:wip:203.0.113.9', `write:wsub:${sub}`], path);
   }
-  // Routes that don't write alerts don't use RL_WRITE.
   const { keys, bindings } = recorder();
   await raw('/unsubscribe', { headers: ip, body: JSON.stringify({ subscriptionId: sub }) }, { ...env, ...bindings });
-  assert.deepEqual(keys, ['api:ip:203.0.113.9']);
+  // /unsubscribe deletes rows, so it is write-limited too (since 91ac016); /subscribe is not.
+  assert.deepEqual(keys, ['api:ip:203.0.113.9', 'write:wip:203.0.113.9', `write:wsub:${sub}`]);
 });
 
 test('write limits: an exhausted IP or subscription gets 429 before any D1 query', async () => {
@@ -775,4 +775,33 @@ test('wrangler.toml declares the three rate-limit bindings with distinct namespa
   // The custom domain is attached (since the 2026-10-29 reopen), and workers.dev stays on.
   assert.match(toml, /^workers_dev = true$/m);
   assert.match(toml, /^routes\s*=\s*\[\s*\{ pattern = "push\.artimer\.win", custom_domain = true \},\s*\]/m);
+});
+
+// ---- Notification text safety (stolen subscription id) -----------------------
+
+test('/schedule and /sync store prefixed titles and link-free bodies', async () => {
+  const sub = await subscribe();
+  const scary = { id: 'scary', fireAt: inMin(5), title: 'VIRUS DETECTED! Visit https://evil.example/fix', body: 'Call now: www.scam.co or paypal-secure.com/login. Info: artimer.win' };
+  assert.equal((await call('/schedule', { subscriptionId: sub, alerts: [scary] })).status, 200);
+  let row = await proxy.env.DB.prepare('SELECT title, body FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, 'scary').first();
+  assert.equal(row.title, 'AR Farm Timer: VIRUS DETECTED! Visit');
+  assert.equal(row.body, 'Call now: or Info: artimer.win');
+  const already = { id: 'p', fireAt: inMin(6), title: 'AR Farm Timer: Rice is ready!', body: 'Harvest Rice.' };
+  const long = { id: 'l', fireAt: inMin(7), title: 'y'.repeat(120), body: '' };
+  assert.equal((await call('/sync', { subscriptionId: sub, alerts: [already, long] })).status, 200);
+  row = await proxy.env.DB.prepare('SELECT title FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, 'p').first();
+  assert.equal(row.title, 'AR Farm Timer: Rice is ready!'); // not prefixed twice
+  row = await proxy.env.DB.prepare('SELECT title FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, 'l').first();
+  assert.equal(row.title.length, 120);
+  assert.ok(row.title.startsWith('AR Farm Timer: ') && row.title.endsWith('\u2026'));
+});
+
+test('rows stored before the prefix are prefixed and de-linked when sent', async () => {
+  const sub = await subscribe();
+  await proxy.env.DB.prepare('INSERT INTO alerts (sub_id, id, fire_at, title, body, url, attempts) VALUES (?, ?, ?, ?, ?, ?, 0)')
+    .bind(sub, 'legacy', Date.now() - 1000, 'Your account is locked', 'Unlock at http://evil.example', null).run();
+  // sendWebPush encrypts the payload; check its plaintext via buildPayload on the stored row.
+  const row = await proxy.env.DB.prepare('SELECT * FROM alerts WHERE sub_id = ? AND id = ?').bind(sub, 'legacy').first();
+  const sent = [JSON.parse(buildPayload(row, env)).notification];
+  assert.deepEqual([sent[0].title, sent[0].body], ['AR Farm Timer: Your account is locked', 'Unlock at']);
 });

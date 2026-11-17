@@ -163,6 +163,66 @@ function str(v, max) {
   return s;
 }
 
+// ---- Notification text safety -----------------------------------------------
+// Anyone holding a subscription id could otherwise make a user's device show
+// any text (a "notification-permission scam"). Every notification title is
+// therefore forced to start with TITLE_PREFIX, and links are removed from the
+// caller-supplied text, so a stolen id can't send scary titles or a link to
+// tap. Applied when alerts are stored and again when they are sent (rows
+// stored before this change).
+export const TITLE_PREFIX = 'AR Farm Timer: ';
+export const MAX_TITLE_LEN = 120; // final title, prefix included
+const MAX_ALERT_BODY_LEN = 300;
+const LINK_REMOVED = '';
+// The app's own domain may stay in text (bare host, optional path).
+const OWN_HOST_RE = /^(?:www\.)?artimer\.win(?:[/?#]|$)/iu;
+// scheme://..., www...., and bare domain-like tokens (label.label.tld, IDN letters too).
+const SCHEME_URL_RE = /\b[a-z][a-z0-9+.-]*:\/\/\S*/giu;
+// e-mail addresses ("contact support@...") are removed as well.
+const EMAIL_RE = /[^\s@]+@[^\s@]+\.[^\s@]+/gu;
+const WWW_URL_RE = /(?<![\p{L}\p{N}.-])www\.\S+/giu;
+const BARE_DOMAIN_RE = /(?<![\p{L}\p{N}@.-])(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?\.)+\p{L}{2,}(?![\p{L}\p{N}-])(?::\d{1,5})?(?:[/?#]\S*)?/gu;
+// Control characters, zero-width / bidi format characters.
+const INVISIBLE_RE = /[\p{Cc}\p{Cf}\u2028\u2029]/gu;
+
+function cutTo(s, max) {
+  let out = s.slice(0, max);
+  if (out.length && /[\uD800-\uDBFF]$/.test(out)) out = out.slice(0, -1);
+  return out;
+}
+
+/** [text] with links and e-mail addresses removed (artimer.win kept), on one line, spaces collapsed. */
+export function stripLinks(text) {
+  let s = String(text ?? '').replace(INVISIBLE_RE, ' ');
+  s = s.replace(SCHEME_URL_RE, LINK_REMOVED);
+  s = s.replace(EMAIL_RE, LINK_REMOVED);
+  s = s.replace(WWW_URL_RE, (m) => (OWN_HOST_RE.test(m) ? m : LINK_REMOVED));
+  s = s.replace(BARE_DOMAIN_RE, (m) => (OWN_HOST_RE.test(m) ? m : LINK_REMOVED));
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * The title a notification is shown with: "AR Farm Timer: <caller text>",
+ * at most MAX_TITLE_LEN chars (the caller's part is cut with an ellipsis).
+ * A title that already starts with the prefix isn't prefixed twice.
+ */
+export function safeTitle(title) {
+  let rest = String(title ?? '');
+  // Remove the prefix (repeated or not) so it is added exactly once.
+  const bare = TITLE_PREFIX.trim();
+  while (rest.trimStart().startsWith(bare)) rest = rest.trimStart().slice(bare.length);
+  rest = stripLinks(rest);
+  if (!rest) rest = 'Alert';
+  const room = MAX_TITLE_LEN - TITLE_PREFIX.length;
+  if (rest.length > room) rest = cutTo(rest, room - 1).trimEnd() + '\u2026';
+  return TITLE_PREFIX + rest;
+}
+
+/** Notification body with links removed, at most MAX_ALERT_BODY_LEN chars. */
+export function safeBody(body) {
+  return cutTo(stripLinks(body), MAX_ALERT_BODY_LEN);
+}
+
 /** Validates and normalises alerts from the app. */
 export function parseAlerts(list, now, env = {}) {
   if (!Array.isArray(list)) throw new HttpError(400, 'alerts must be an array');
@@ -177,7 +237,7 @@ export function parseAlerts(list, now, env = {}) {
     if (!id || !title || !Number.isFinite(fireAt)) throw new HttpError(400, 'alert needs id, title, fireAt');
     if (fireAt > now + MAX_FUTURE_MS) throw new HttpError(400, 'fireAt too far in the future');
     if (fireAt < now - MAX_PAST_MS) throw new HttpError(400, 'fireAt too far in the past');
-    return { id, fireAt: Math.round(fireAt), title, body: str(a.body, 300) || '', url: safeAppUrl(a.url, env) };
+    return { id, fireAt: Math.round(fireAt), title: safeTitle(title), body: safeBody(str(a.body, MAX_ALERT_BODY_LEN) || ''), url: safeAppUrl(a.url, env) };
   });
 }
 
@@ -345,7 +405,7 @@ export function buildPayload(alert, env) {
   // reads the same structure on older iOS / other browsers.
   return JSON.stringify({
     web_push: 8030,
-    notification: { title: alert.title, body: alert.body || '', navigate, tag: String(alert.id).slice(0, 64) },
+    notification: { title: safeTitle(alert.title), body: safeBody(alert.body || ''), navigate, tag: String(alert.id).slice(0, 64) },
   });
 }
 
@@ -508,7 +568,7 @@ async function testRoute(c) {
   const touch = touchStatements(env, sub, now, false);
   if (touch.length) await touch[0].run();
   const t0 = Date.now();
-  const status = await pushTo(sub, { id: 'test', title: 'AR Farm Timer test alert', body: 'Push alerts are working.', url: safeAppUrl(body.url, env) }, env);
+  const status = await pushTo(sub, { id: 'test', title: `${TITLE_PREFIX}Test alert`, body: 'Push alerts are working.', url: safeAppUrl(body.url, env) }, env);
   const pushMs = Date.now() - t0;
   console.log('test push', JSON.stringify({ host: new URL(sub.endpoint).host, status, pushMs }));
   if (status === 404 || status === 410) {

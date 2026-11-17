@@ -30,6 +30,14 @@ closed. The app works without it: you then get in-app alerts only while it's ope
 | `POST /test` | sends a test push now and returns `{pushStatus}` |
 | `POST /unsubscribe` | deletes the subscription and its alerts |
 
+Notification text: whoever holds a subscription id can schedule alerts for
+that device, so the server never shows caller text as-is. Every title is
+forced to start with `AR Farm Timer: ` (added once, never twice; the final
+title is at most 120 characters, the caller's part cut with `…`), and links
+(`http(s)://…`, `www.…`, bare domains, e-mail addresses) are removed from
+titles and bodies; `artimer.win` is kept. This runs when alerts are stored
+and again when they are sent, so rows stored earlier are covered too.
+
 Limits: 300 alerts per subscription, at most 300 ids (alerts plus cancels) per
 request, and at most 35 days ahead. A request that breaks a limit gets a 400
 and nothing is written. Bulk writes are **one SQL statement** over

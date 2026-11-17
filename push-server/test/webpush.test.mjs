@@ -67,7 +67,7 @@ test('payload uses declarative web push format', () => {
   const p = JSON.parse(buildPayload({ id: 'a', title: 'T', body: 'B', url: null }, { APP_URL: 'https://x.test/app/' }));
   assert.equal(p.web_push, 8030);
   assert.equal(p.notification.navigate, 'https://x.test/app/');
-  assert.equal(p.notification.title, 'T');
+  assert.equal(p.notification.title, 'AR Farm Timer: T'); // server-side prefix
 });
 
 test('endpoint allow-list: no other ports, userinfo, look-alike hosts or huge endpoints', () => {
@@ -139,5 +139,7 @@ test('parseAlerts: past bound, object check, surrogate-safe cut', () => {
   assert.equal(parseAlerts([{ id: 'a', title: 'x', fireAt: now + 5000 }], now)[0].fireAt, now + 5000); // epoch ms
   assert.throws(() => parseAlerts([{ id: 'a', title: 'x', fireAt: Infinity }], now));
   const t = parseAlerts([{ id: 'a', title: 'x'.repeat(119) + '\u{1F33E}', fireAt: '2026-10-17T01:00:00Z' }], now)[0].title;
-  assert.equal(t.length, 119);
+  assert.equal(t.length, 120); // prefix + cut caller text + ellipsis
+  assert.ok(t.startsWith('AR Farm Timer: ') && t.endsWith('\u2026'));
+  assert.doesNotMatch(t, /[\uD800-\uDBFF](?![\uDC00-\uDFFF])/);
 });
